@@ -1,6 +1,18 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
+    extra_info (id) {
+        id -> Int4,
+        password_entry_id -> Int4,
+        #[sql_name = "type"]
+        #[max_length = 100]
+        type_ -> Varchar,
+        #[max_length = 255]
+        info -> Varchar,
+    }
+}
+
+diesel::table! {
     password_entries (id) {
         id -> Int4,
         #[max_length = 100]
@@ -12,3 +24,10 @@ diesel::table! {
         extra_info -> Nullable<Text>,
     }
 }
+
+diesel::joinable!(extra_info -> password_entries (password_entry_id));
+
+diesel::allow_tables_to_appear_in_same_query!(
+    extra_info,
+    password_entries,
+);
