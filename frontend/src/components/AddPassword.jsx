@@ -58,7 +58,7 @@ const AddPassword = () => {
 						</Button>
 					</InputRightElement>
 				</InputGroup>
-				<button type="submit">Add</button>
+				<Button type="submit">Add</Button>
 			</form>
 			{message && <p>{message}</p>}
 		</div>

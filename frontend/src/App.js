@@ -10,11 +10,15 @@ function App() {
 	const [loggedIn, setLoggedIn] = useState(false)
 	return (
 		<ChakraProvider>
-			<div className="App">
-				{loggedIn ? <><Passwords />
-					<AddPassword /> </> : <Login setLoggedIn={setLoggedIn} />}
+				{loggedIn ? 
+					<>
+						<Passwords />
+						<AddPassword /> 
+					</> 
+					: 
+					<Login setLoggedIn={setLoggedIn} />
+				}
 				<TestConnection />
-			</div>
 		</ChakraProvider>
 	);
 }

@@ -22,16 +22,12 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 			updatedEntry.password = passwordEdit
 			console.log("New password is: " + passwordEdit)
 		}
-		console.log(Object.keys(updatedEntry))
 		if (Object.keys(updatedEntry).length > 0) {
 			const jsonString = JSON.stringify(updatedEntry)
 			updateFunc(id, jsonString)
 			console.log("Update json is: " + jsonString)
 		}
 		setEditing(false)
-		setUsernameEdit(username)
-		setPlatformEdit(platform)
-		setPasswordEdit(password)
 	}
 
 	return (
@@ -48,13 +44,12 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 							<Button
 								leftIcon={<MdDeleteOutline />}
 								colorScheme="red"
-								style={delButtonStyle}
 								onClick={() => deleteFunc(id)}
+								style={{marginRight: '10px'}}
 							>Delete</Button>
 							<Button
 								leftIcon={<MdEdit />}
 								colorScheme="blue"
-								style={delButtonStyle}
 								onClick={() => setEditing(true)}
 							>Edit</Button>
 						</div>
@@ -82,7 +77,6 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 							<Button
 								leftIcon={<MdCheck />}
 								colorScheme="green"
-								style={delButtonStyle}
 								onClick={handleConfirmEdit}
 							>Confirm</Button>
 						</div>
@@ -103,8 +97,6 @@ const containerStyle = {
 	margin: '10px 0',
 	backgroundColor: '#f9f9f9'
 };
-const delButtonStyle = {
-}
 const infoStyle = {
 	textAlign: 'left',
 	padding: '0 10px',

@@ -5,6 +5,21 @@ const Passwords = () => {
 	const [query, setQuery] = useState('');
 	const [status, setStatus] = useState('');
 	const [entries, setEntries] = useState([]);
+	const updateEntryFunc = async (id, jsonString) => {
+		try {
+			const response = await fetch(host + '/update_password/' + id, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: jsonString
+			});
+			fetchPasswords()
+			setStatus(response)
+		} catch (error) {
+			setStatus('Error updating entry:', error);
+		}
+	}
 	const deletePassword = async (id) => {
 		if (isNaN(id)) {
 			setStatus("Invalid entry, must be an id (int)")
@@ -23,7 +38,7 @@ const Passwords = () => {
 			});
 			const resData = await response.json()
 			fetchPasswords()
-			console.log(resData.message + "This one")
+			console.log(resData.message)
 			setStatus(resData.message)
 		} catch (error) {
 			setStatus('Error fetching passwords:' + error)
@@ -79,6 +94,7 @@ const Passwords = () => {
 							password={entry.password}
 							platform={entry.platform}
 							username={entry.user}
+							updateFunc={updateEntryFunc}
 							deleteFunc={deletePassword}
 						/>
 					))}

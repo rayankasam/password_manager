@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import PasswordCell from './passwordCell';
 import { host } from '../connection';
-import { Heading, Button, Input } from '@chakra-ui/react';
+import { Heading, Button, Input, Alert } from '@chakra-ui/react';
 const Passwords = () => {
-	const [query, setQuery] = useState('');
-	const [status, setStatus] = useState('');
+	const [query, setQuery] = useState("a");
+	const [status, setStatus] = useState("");
 	const [entries, setEntries] = useState([]);
+	const clearStatus = async () => {
+	}
 	const deletePassword = async (id) => {
 		if (isNaN(id)) {
 			setStatus("Invalid entry, must be an id (int)")
@@ -18,16 +20,14 @@ const Passwords = () => {
 				headers: {
 					'Content-Type': 'application/json',
 				},
-				body: JSON.stringify({
-					id
-				}),
+				body: JSON.stringify({ id }),
 			});
 			const resData = await response.json()
 			fetchPasswords()
 			console.log(resData.message + "This one")
 			setStatus(resData.message)
 		} catch (error) {
-			setStatus('Error fetching passwords:' + error)
+			setStatus('Error deleting password:' + error)
 		}
 	};
 	const updateEntryFunc = async (id, jsonString) => {
@@ -55,10 +55,12 @@ const Passwords = () => {
 				},
 			});
 			const data = await response.json();
-			setEntries(data.entries);
+			setEntries(data || []);
 		} catch (error) {
 			setStatus('Error fetching passwords:', error);
 		}
+		console.log("Fetched sucesfully")
+
 	};
 	useEffect(() => {
 		fetchPasswords();
@@ -76,7 +78,7 @@ const Passwords = () => {
 				/>
 
 			</div>
-			{status !== '' && <p>{status}</p>}
+			{status !== '' && <Alert>{status}</Alert>}
 			{(
 				<ul>
 					<PasswordCell
