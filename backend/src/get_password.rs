@@ -1,23 +1,67 @@
-use crate::establish_connection;
-use crate::schema::password_entries::dsl::password_entries;
-use crate::{PasswordEntry, PasswordResponse};
+use crate::database::establish_connection;
+use crate::schema::password_entries;
+use crate::{ExtraInfo, PasswordEntry, PasswordResEntry};
+use crate::models::*;
 use actix_web::{web, HttpResponse, Responder};
-use diesel::SelectableHelper;
-use diesel::associations::HasTable;
+use diesel::result::Error;
+use diesel::{BelongingToDsl, ExpressionMethods, QueryDsl, RunQueryDsl};
+use serde::Deserialize;
+use std::collections::HashMap;
+use diesel::prelude::*;
 
-pub async fn get_passwords(query: web::Path<String>) -> impl Responder {
-    println!("{}", query);
-    let query_str = if query.as_str() == "~" {
-        String::from("")
-    } else {
-        query.into_inner()
+#[derive(Debug, Deserialize)]
+pub struct QueryParams {
+    query: Option<String>,
+}
+pub async fn get_passwords(
+    uid: web::Path<i32>,
+    query_params: web::Query<QueryParams>,
+) -> impl Responder {
+    let query_str = match query_params.into_inner().query {
+        Some(a) => a,
+        None => String::from(""),
     };
     let conn = &mut establish_connection();
-    let result = password_entries::table
-        .filter(password_entries::platform.ilike(format!("%{}%", query_str)))
-        .limit(5)
-        .select(PasswordEntry::as_select())
+
+    let entries_result: Result<Vec<PasswordEntry>, Error> = conn.build_transaction().run(|conn| {
+        password_entries::table
+            .filter(password_entries::user_id.eq(uid.into_inner()))
+            .filter(password_entries::platform.ilike(format!("%{}%", query_str)))
+            .limit(5)
+            .select(PasswordEntry::as_select())
+            .load::<PasswordEntry>(conn)
+    });
+    match entries_result {
+        Ok(password_entries) => {
+            let new_pass_entries: Vec<PasswordResEntry> = password_entries
+                .into_iter()
+                .map(|entry| {
+                    let extra_info_entry: Option<HashMap<String, String>> = get_extra_info(&entry);
+                    PasswordResEntry {
+                        id: entry.id.clone(),
+                        platform: entry.platform.clone(),
+                        user: entry.user.clone(),
+                        password: entry.password.clone(),
+                        extra_info: extra_info_entry,
+                    }
+                })
+                .collect();
+            HttpResponse::Ok().json(new_pass_entries)
+        }
+        Err(_) => HttpResponse::InternalServerError().body("Error loading passwords"),
+    }
+}
+fn get_extra_info(password_entry: &PasswordEntry) -> Option<HashMap<String, String>> {
+    let conn = &mut establish_connection();
+    let extra_infos: Vec<ExtraInfo> = ExtraInfo::belonging_to(password_entry)
         .load(conn)
-        .expect("Issue loading");
-    HttpResponse::Ok().json(PasswordResponse { entries: result })
+        .expect("Issue getting Extra Info");
+    if extra_infos.len() == 0 {
+        return None;
+    }
+    let mut extra_infos_map = HashMap::new();
+    for extra_info in extra_infos {
+        extra_infos_map.insert(extra_info.type_, extra_info.info);
+    }
+    Some(extra_infos_map)
 }

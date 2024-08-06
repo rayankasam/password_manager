@@ -11,7 +11,7 @@ pub async fn del_password(res: web::Json<DeletePasswordEntry>) -> impl Responder
             Ok(0) => "No entries with that id".to_string(),
             Ok(1) => "Deleted!".to_string(),
             Ok(_) => unreachable!("Should never delete more than 1 row"),
-            Err(_) => "Failed".to_string(),
+            Err(e) => format!("Failed with error {}", e),
         },
     })
 }

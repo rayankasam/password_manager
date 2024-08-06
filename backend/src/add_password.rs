@@ -1,4 +1,4 @@
-use crate::establish_connection;
+use crate::database::establish_connection;
 use crate::models::*;
 use actix_web::{web, Responder, HttpResponse};
 use crate::schema::{extra_info, password_entries};

@@ -4,5 +4,5 @@ CREATE TABLE extra_info (
     password_entry_id INT NOT NULL,
     type VARCHAR(100) NOT NULL,
     info VARCHAR(255) NOT NULL,
-    FOREIGN KEY (password_entry_id) REFERENCES password_entries(id)
+    FOREIGN KEY (password_entry_id) REFERENCES password_entries(id) ON DELETE CASCADE
 );
