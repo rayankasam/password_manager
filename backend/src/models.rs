@@ -34,10 +34,11 @@ pub struct UpdatePasswordEntry {
 }
 #[derive(Insertable)]
 #[diesel(table_name = crate::schema::password_entries)]
-pub struct NewPasswordEntry<'a> {
-    pub platform: &'a String,
-    pub user: &'a String,
-    pub password: &'a String,
+pub struct NewPasswordEntry {
+    pub platform: String,
+    pub user: String,
+    pub password: String,
+    pub user_id: i32
 }
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct DeletePasswordEntry {
@@ -77,6 +78,7 @@ pub struct PasswordResEntry {
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PasswordReq {
+    pub user_id: i32,
     pub platform: String,
     pub user: String,
     pub password: String,

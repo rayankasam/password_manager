@@ -32,9 +32,10 @@ fn enter_password_into_persistent_storage(
         .read_write()
         .run::<_, Error, _>(|conn| {
             let new_password_entry = NewPasswordEntry {
-                platform: &data.platform.clone(),
-                user: &data.user.clone(),
-                password: &data.password.clone(),
+                user_id: data.user_id.clone(),
+                platform: data.platform.clone(),
+                user: data.user.clone(),
+                password: data.password.clone(),
             };
 
             let inserted_id: i32 = diesel::insert_into(password_entries::table)

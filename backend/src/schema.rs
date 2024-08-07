@@ -21,7 +21,6 @@ diesel::table! {
         user -> Varchar,
         #[max_length = 255]
         password -> Varchar,
-        extra_info -> Nullable<Text>,
         user_id -> Int4,
     }
 }

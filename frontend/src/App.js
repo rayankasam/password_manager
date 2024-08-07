@@ -13,7 +13,7 @@ function App() {
 				{uid !== -1 ? 
 					<>
 						<Passwords uid={uid}/>
-						<AddPassword /> 
+						<AddPassword uid={uid}/> 
 					</> 
 					: 
 					<Login setUid={setUid} />

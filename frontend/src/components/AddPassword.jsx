@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { host } from '../connection';
 import { Input, Button, Heading, InputGroup, InputRightElement } from '@chakra-ui/react';
-const AddPassword = () => {
+const AddPassword = ({uid}) => {
 	const [platform, setPlatform] = useState('');
 	const [user, setUser] = useState('');
 	const [password, setPassword] = useState('');
@@ -19,6 +19,7 @@ const AddPassword = () => {
 				'Content-Type': 'application/json',
 			},
 			body: JSON.stringify({
+				user_id: uid,
 				platform,
 				user,
 				password,

@@ -4,4 +4,3 @@ ALTER TABLE password_entries DROP CONSTRAINT fk_user;
 
 -- Remove the new column
 ALTER TABLE password_entries DROP COLUMN user_id;
-
