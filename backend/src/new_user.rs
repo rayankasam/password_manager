@@ -1,5 +1,5 @@
 use crate::database::establish_connection;
-use crate::models::{NewUserReq, User};
+use crate::models::{NewUser, NewUserReq, User};
 use crate::schema::users;
 use actix_web::{web, HttpResponse, Responder};
 use argon2::{
@@ -21,7 +21,10 @@ pub async fn new_user(req: web::Json<NewUserReq>) -> impl Responder {
         .len()
     {
         0 => (),
-        _ => return HttpResponse::Conflict().body("A user by this name already exists, use anothe rname")
+        _ => {
+            return HttpResponse::Conflict()
+                .body("A user by this name already exists, use anothe rname")
+        }
     }
 
     let argon2 = Argon2::default();
@@ -31,10 +34,9 @@ pub async fn new_user(req: web::Json<NewUserReq>) -> impl Responder {
         .expect("Hash failed")
         .to_string();
     let changed_rows = diesel::insert_into(users::table)
-        .values(&User {
+        .values(&NewUser {
             username: new_user.username,
             password_hash,
-            password_salt: password_salt.to_string(),
         })
         .execute(&mut conn);
     match changed_rows {

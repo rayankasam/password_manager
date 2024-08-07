@@ -11,12 +11,18 @@ pub struct PasswordEntry {
     pub user: String,
     pub password: String,
 }
-#[derive(Insertable, Selectable, Queryable)]
+#[derive(Insertable, Selectable, Queryable, Clone)]
 #[diesel(table_name = crate::schema::users)]
 pub struct User {
+    pub id: i32,
     pub username: String,
     pub password_hash: String,
-    pub password_salt: String
+}
+#[derive(Insertable, Selectable, Queryable, Clone)]
+#[diesel(table_name = crate::schema::users)]
+pub struct NewUser {
+    pub username: String,
+    pub password_hash: String,
 }
 #[derive(Serialize, Deserialize, Clone, AsChangeset, Debug)]
 #[diesel(table_name = crate::schema::password_entries)]
@@ -93,4 +99,9 @@ pub struct NewUserReq {
 pub struct LoginReq {
     pub username: String,
     pub password: String
+}
+#[derive(Serialize, Deserialize)]
+pub struct SuccessfulLogin {
+    pub id: i32,
+    pub message: String
 }
