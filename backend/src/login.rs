@@ -16,12 +16,12 @@ pub async fn login(req: web::Json<LoginReq>) -> impl Responder {
         .load::<User>(&mut conn)
     {
         Ok(users) => users,
-        Err(_) => return HttpResponse::NotFound().body("Username not found"),
+        Err(_) => return HttpResponse::NotFound().json(MyResponse { message: "Username not found".to_string()}),
     };
     let user: User = match users.len() {
-        0 => unreachable!(),
+        0 => return HttpResponse::Unauthorized().json(MyResponse {message: "Incorrect Username".to_string()}),
         1 => users.first().unwrap().clone(),
-        _ => return HttpResponse::InternalServerError() .body("This username has more than one entry, it is broken")
+        _ => return HttpResponse::InternalServerError().json(MyResponse {message: "This username has more than one entry, it is broken".to_string()})
     };
     let password_hash = match users.first() {
         Some(user) => PasswordHash::new(&user.password_hash).expect("Password hashing failed"),
@@ -32,6 +32,6 @@ pub async fn login(req: web::Json<LoginReq>) -> impl Responder {
         .is_ok()
     {
         true => HttpResponse::Ok().json(SuccessfulLogin {message: "Logged in succesfully".to_string(), id: user.id}),
-        false => HttpResponse::Unauthorized().body("Incorrect Password")
+        false => HttpResponse::Unauthorized().json(MyResponse { message: "Incorrect Password".to_string()})
     }
 }

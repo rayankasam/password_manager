@@ -1,27 +1,43 @@
 import React, { useState } from "react";
-import { Alert } from "@chakra-ui/react";
+import { Alert, Input, Button, Heading } from "@chakra-ui/react";
+import { host } from "../connection";
 
-function Login({setLoggedIn}) {
+function Login({ setUid }) {
 	const [password, setPassword] = useState("");
+	const [username, setUsername] = useState("");
 	const [status, setStatus] = useState("");
 	const [isHovered, setIsHovered] = useState(false);
 
 	const handlePasswordChange = (event) => {
 		setPassword(event.target.value);
 	};
-
-	const handleSubmit = (event) => {
+	const handleUsernameChange = (event) => {
+		setUsername(event.target.value);
+	};
+	const handleSubmit = async (event) => {
 		event.preventDefault();
 		console.log("Password submitted:", password);
-		if (password === "98ztr4jg") {
-			setLoggedIn(true)
-		}
-		else {
-			setStatus("Incorrect password")
-			removeStatus()
+		try {
+			const url = host + '/login'
+			const response = await fetch(url, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({ username, password }),
+			});
+			const resData = await response.json()
+
+			console.log(resData.message + response.ok)
+			if (response.ok) {
+				setUid(resData.id)
+			}
+			setStatus(resData.message)
+		} catch (error) {
+			setStatus('Error logging in:' + error)
 		}
 	};
-	const removeStatus = async() => {
+	const removeStatus = async () => {
 		await new Promise(r => setTimeout(r, 3000));
 		setStatus("")
 	}
@@ -29,17 +45,25 @@ function Login({setLoggedIn}) {
 	return (
 		<div style={styles.formContainer}>
 			<form style={styles.form} onSubmit={handleSubmit}>
-				<h2>Login</h2>
+				<Heading size={"sm"}>Login</Heading>
 				{status !== "" && <Alert status='error'>{status}</Alert>}
-				<input
+				<Input
+					type="username"
+					placeholder="Username"
+					value={username}
+					onChange={handleUsernameChange}
+					required
+					style={styles.input}
+				/>
+				<Input
 					type="password"
-					placeholder="Enter your password"
+					placeholder="Password"
 					value={password}
 					onChange={handlePasswordChange}
 					required
 					style={styles.input}
 				/>
-				<button
+				<Button
 					type="submit"
 					style={{
 						...styles.button,
@@ -49,7 +73,7 @@ function Login({setLoggedIn}) {
 					onMouseLeave={() => setIsHovered(false)}
 				>
 					Submit
-				</button>
+				</Button>
 			</form>
 		</div>
 	);

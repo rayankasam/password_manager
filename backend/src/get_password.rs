@@ -48,7 +48,7 @@ pub async fn get_passwords(
                 .collect();
             HttpResponse::Ok().json(new_pass_entries)
         }
-        Err(_) => HttpResponse::InternalServerError().body("Error loading passwords"),
+        Err(_) => HttpResponse::InternalServerError().json(MyResponse {message: "Error loading passwords".to_string()}),
     }
 }
 fn get_extra_info(password_entry: &PasswordEntry) -> Option<HashMap<String, String>> {

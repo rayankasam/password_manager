@@ -1,6 +1,7 @@
 use crate::database::establish_connection;
 use crate::models::{NewUser, NewUserReq, User};
 use crate::schema::users;
+use crate::MyResponse;
 use actix_web::{web, HttpResponse, Responder};
 use argon2::{
     password_hash::{PasswordHasher, SaltString},
@@ -23,7 +24,7 @@ pub async fn new_user(req: web::Json<NewUserReq>) -> impl Responder {
         0 => (),
         _ => {
             return HttpResponse::Conflict()
-                .body("A user by this name already exists, use anothe rname")
+                .json(MyResponse{message: "A user by this name already exists, use anothe rname".to_string()})
         }
     }
 
@@ -41,8 +42,8 @@ pub async fn new_user(req: web::Json<NewUserReq>) -> impl Responder {
         .execute(&mut conn);
     match changed_rows {
         Ok(0) => unreachable!("Should never change no rows when adding user"),
-        Ok(1) => HttpResponse::Ok().body("Added"),
+        Ok(1) => HttpResponse::Ok().json(MyResponse{message: "Added".to_string()}),
         Ok(_) => unreachable!("Should never change more than 1 row when adding user"),
-        Err(_) => HttpResponse::InternalServerError().body("Unable to add user, try again later"),
+        Err(_) => HttpResponse::InternalServerError().json(MyResponse {message: "Unable to add user, try again later".to_string()}),
     }
 }

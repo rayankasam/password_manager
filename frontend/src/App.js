@@ -7,16 +7,16 @@ import Login from './components/login.jsx';
 import { ChakraProvider } from '@chakra-ui/react';
 
 function App() {
-	const [loggedIn, setLoggedIn] = useState(false)
+	const [uid, setUid] = useState(-1)
 	return (
 		<ChakraProvider>
-				{loggedIn ? 
+				{uid !== -1 ? 
 					<>
-						<Passwords />
+						<Passwords uid={uid}/>
 						<AddPassword /> 
 					</> 
 					: 
-					<Login setLoggedIn={setLoggedIn} />
+					<Login setUid={setUid} />
 				}
 				<TestConnection />
 		</ChakraProvider>
