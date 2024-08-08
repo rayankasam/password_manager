@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { host } from '../connection';
 import { Input, Button, Heading, InputGroup, InputRightElement } from '@chakra-ui/react';
 const AddPassword = ({uid}) => {
 	const [platform, setPlatform] = useState('');
@@ -13,7 +12,7 @@ const AddPassword = ({uid}) => {
 		if (platform === "") { setMessage("No platform"); return }
 		if (user === "") { setMessage("No username"); return }
 		if (password === "") { setMessage("No password"); return }
-		const response = await fetch(host + '/add_password', {
+		const response = await fetch('/add_password', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',

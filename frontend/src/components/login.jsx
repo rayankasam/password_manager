@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Alert, Input, Button, Heading } from "@chakra-ui/react";
-import { host } from "../connection";
 
 function Login({ setUid }) {
 	const [password, setPassword] = useState("");
@@ -18,8 +17,7 @@ function Login({ setUid }) {
 		event.preventDefault();
 		console.log("Password submitted:", password);
 		try {
-			const url = host + '/login'
-			const response = await fetch(url, {
+			const response = await fetch('/login', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',

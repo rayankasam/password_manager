@@ -1,7 +1,7 @@
 {
   "name": "password_manager_frontend",
   "version": "0.1.0",
-  "proxy": "http://rayan.lol:1234",
+  "proxy": "http://localhost:1234",
   "private": true,
   "dependencies": {
     "@chakra-ui/react": "^2.8.2",

@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
-import { host } from '../connection';
 import { Heading, Button } from '@chakra-ui/react';
 const TestConnection = () => {
   const [response, setResponse] = useState('');
 
   const testConnection = async () => {
     try {
-	console.log(host+ '/')
-      const res = await fetch(host + '/');
+      const res = await fetch('/');
       const data = await res.json();
       setResponse(data.message);
     } catch (err) {
