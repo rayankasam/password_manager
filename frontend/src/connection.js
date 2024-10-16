@@ -1,1 +1,1 @@
-export const host = process.env.API_URL || "http://localhost:8080"
+export const host = process.env.API_URL || "http://localhost:1234/api"

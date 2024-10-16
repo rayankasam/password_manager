@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:latest
-    container_name: password_manager_db
+    container_name: pm_db
     environment:
       POSTGRES_DB: password-db
       POSTGRES_USER: password
@@ -19,7 +19,7 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: on-failure
-    container_name: password_manager_api
+    container_name: pm_api
     stdin_open: true
     tty: true
     ports:
@@ -36,7 +36,7 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
-    container_name: password_manager_app
+    container_name: pm_app
     stdin_open: true
     tty: true
     ports:
@@ -49,7 +49,7 @@ services:
       - password-manager-net
   nginx:
     image: nginx:latest
-    container_name: password_manager_nginx
+    container_name: pm_nginx
     ports:
       - "80:80"
     volumes:

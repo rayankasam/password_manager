@@ -1,37 +1,46 @@
 import React, { useState } from 'react';
-import { Input, Button, Heading, InputGroup, InputRightElement } from '@chakra-ui/react';
-const AddPassword = ({uid}) => {
+import { Input, Button, Heading, InputGroup, InputRightElement, IconButton } from '@chakra-ui/react';
+import { MdRemove } from "react-icons/md";
+import { host } from '../connection';
+const AddPassword = ({ uid, setAddingPassword, setStatus }) => {
 	const [platform, setPlatform] = useState('');
 	const [user, setUser] = useState('');
 	const [password, setPassword] = useState('');
-	const [message, setMessage] = useState('');
 	const [show, setShow] = useState(false);
 	const handleClickShow = () => setShow(!show)
 	const handleSubmit = async (e) => {
 		e.preventDefault();
-		if (platform === "") { setMessage("No platform"); return }
-		if (user === "") { setMessage("No username"); return }
-		if (password === "") { setMessage("No password"); return }
-		const response = await fetch('/add_password', {
+		if (platform === "") { setStatus("No platform"); return }
+		if (user === "") { setStatus("No username"); return }
+		if (password === "") { setStatus("No password"); return }
+		const body = JSON.stringify({
+			user_id: uid,
+			platform,
+			user,
+			password,
+		});
+		console.log(body)
+		const response = await fetch(host + '/add_password', {
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
 			},
-			body: JSON.stringify({
-				user_id: uid,
-				platform,
-				user,
-				password,
-			}),
+			body: body,
 		});
-
 		const data = await response.json();
-		setMessage(data.message);
+		setStatus(data.message);
+		setAddingPassword(false);
 	};
 
 	return (
 		<div>
 			<Heading>Add Password</Heading>
+			<IconButton
+				colorScheme={'red'}
+				aria-label={"Don't add password"}
+				icon={<MdRemove />}
+				onClick={() => setAddingPassword(false)}
+			/>
 			<form onSubmit={handleSubmit} style={formStyle}>
 				<Input
 					type="text"
@@ -60,7 +69,6 @@ const AddPassword = ({uid}) => {
 				</InputGroup>
 				<Button type="submit">Add</Button>
 			</form>
-			{message && <p>{message}</p>}
 		</div>
 	);
 };

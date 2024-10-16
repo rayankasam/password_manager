@@ -1,10 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import PasswordCell from './passwordCell';
-import { Heading, Button, Input, Alert } from '@chakra-ui/react';
+import { Heading, Button, Input, Alert, IconButton } from '@chakra-ui/react';
+import AddPassword from './AddPassword'
+import { MdAdd, MdRefresh } from "react-icons/md";
+import { host } from '../connection';
 const Passwords = ({ uid }) => {
 	const [query, setQuery] = useState("");
 	const [status, setStatus] = useState("");
 	const [entries, setEntries] = useState([]);
+	const [addingPassword, setAddingPassword] = useState(false);
+	useEffect(() => {
+		if (status !== '') {
+			setTimeout(() => setStatus(''), 4000)
+		}
+	}, [status])
 	const deletePassword = async (id) => {
 		if (isNaN(id)) {
 			setStatus("Invalid entry, must be an id (int)")
@@ -12,7 +21,7 @@ const Passwords = ({ uid }) => {
 		console.log(id)
 		try {
 			console.log(`Making request to /del_password`)
-			const response = await fetch('/del_password', {
+			const response = await fetch(host + '/del_password', {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
@@ -29,7 +38,7 @@ const Passwords = ({ uid }) => {
 	};
 	const updateEntryFunc = async (id, jsonString) => {
 		try {
-			const response = await fetch('/update_password/' + id, {
+			const response = await fetch(host + '/update_password/' + id, {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
@@ -45,7 +54,7 @@ const Passwords = ({ uid }) => {
 	}
 	const fetchPasswords = async () => {
 		try {
-			const response = await fetch(`/get_password/${uid}?query=${encodeURIComponent(query)}`, {
+			const response = await fetch(host + `/get_password/${uid}?query=${encodeURIComponent(query)}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
@@ -62,10 +71,14 @@ const Passwords = ({ uid }) => {
 		fetchPasswords();
 	}, [query]);
 	return (
-		<div>
+		<div style={{ alignItems: "center" }}>
 			<Heading>Passwords</Heading>
 			<div>
-				<Button onClick={() => fetchPasswords()}>Refresh</Button>
+				<IconButton
+					icon={<MdRefresh/>}
+					onClick={() => fetchPasswords()}
+					color={"blue"}
+				/>
 				<Input
 					type="text"
 					placeholder="Query"
@@ -98,6 +111,16 @@ const Passwords = ({ uid }) => {
 					))}
 				</ul>
 			)}
+			{addingPassword ?
+				<AddPassword uid={uid} setAddingPassword={setAddingPassword} setStatus={setStatus} />
+				:
+				<IconButton
+					colorScheme={'blue'}
+					aria-label={'Add a new password'}
+					icon={<MdAdd />}
+					onClick={() => setAddingPassword(true)}
+				/>
+			}
 		</div>
 	);
 };

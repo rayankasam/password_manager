@@ -1,49 +1,60 @@
 import React, { useState } from "react";
-import { Alert, Input, Button, Heading } from "@chakra-ui/react";
+import { Alert, Input, Button, Heading, VStack } from "@chakra-ui/react";
+import { host } from "../connection";
 
 function Login({ setUid }) {
 	const [password, setPassword] = useState("");
+	const [passwordTest, setPasswordTest] = useState("");
 	const [username, setUsername] = useState("");
 	const [status, setStatus] = useState("");
 	const [isHovered, setIsHovered] = useState(false);
+	const [isRegisterMode, setIsRegisterMode] = useState(false);
 
 	const handlePasswordChange = (event) => {
 		setPassword(event.target.value);
+	};
+	const handlePasswordTestChange = (event) => {
+		setPasswordTest(event.target.value);
 	};
 	const handleUsernameChange = (event) => {
 		setUsername(event.target.value);
 	};
 	const handleSubmit = async (event) => {
 		event.preventDefault();
-		console.log("Password submitted:", password);
+		if (isRegisterMode && password !== passwordTest) {
+			setStatus("Passwords don't match");
+			return
+		}
+		const endpoint = isRegisterMode ? '/new_user' : '/login';
+		const action = isRegisterMode ? 'registering' : 'logging in';
+
 		try {
-			const response = await fetch('/login', {
+			const response = await fetch(host + endpoint, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json',
 				},
 				body: JSON.stringify({ username, password }),
 			});
-			const resData = await response.json()
-
-			console.log(resData.message + response.ok)
+			const resData = await response.json();
+			console.log(resData.id);
 			if (response.ok) {
-				setUid(resData.id)
+				setStatus(`Success ${action}!`);
+				if (!isRegisterMode) {
+					setUid(resData.id); // Only set UID if logging in
+				}
+			} else {
+				setStatus(resData.message || `Error ${action}`);
 			}
-			setStatus(resData.message)
 		} catch (error) {
-			setStatus('Error logging in:' + error)
+			setStatus(`Error ${action}: ` + error.message);
 		}
 	};
-	const removeStatus = async () => {
-		await new Promise(r => setTimeout(r, 3000));
-		setStatus("")
-	}
 
 	return (
 		<div style={styles.formContainer}>
 			<form style={styles.form} onSubmit={handleSubmit}>
-				<Heading size={"sm"}>Login</Heading>
+				<Heading size={"sm"}>{isRegisterMode ? "Register" : "Login"}</Heading>
 				{status !== "" && <Alert status='error'>{status}</Alert>}
 				<Input
 					type="username"
@@ -61,6 +72,15 @@ function Login({ setUid }) {
 					required
 					style={styles.input}
 				/>
+				{ isRegisterMode ?
+				<Input
+					type="password"
+					placeholder="Password"
+					value={passwordTest}
+					onChange={handlePasswordTestChange}
+					required
+					style={styles.input}
+				/> : <></> }
 				<Button
 					type="submit"
 					style={{
@@ -70,7 +90,13 @@ function Login({ setUid }) {
 					onMouseEnter={() => setIsHovered(true)}
 					onMouseLeave={() => setIsHovered(false)}
 				>
-					Submit
+					{isRegisterMode ? "Register" : "Login"}
+				</Button>
+				<Button
+					onClick={() => setIsRegisterMode(!isRegisterMode)}
+					style={styles.toggleButton}
+				>
+					{isRegisterMode ? "Already have an account? Login" : "Don't have an account? Register"}
 				</Button>
 			</form>
 		</div>
@@ -119,5 +145,14 @@ const styles = {
 	},
 	buttonHover: {
 		backgroundColor: '#0056b3'
+	},
+	toggleButton: {
+		marginTop: '10px',
+		color: '#007bff',
+		backgroundColor: 'transparent',
+		cursor: 'pointer',
+		textDecoration: 'underline',
+		border: 'none'
 	}
 };
+
