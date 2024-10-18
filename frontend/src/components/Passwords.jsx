@@ -73,17 +73,17 @@ const Passwords = ({ uid }) => {
 	return (
 		<div style={{ alignItems: "center" }}>
 			<Heading>Passwords</Heading>
-			<div>
-				<IconButton
-					icon={<MdRefresh/>}
-					onClick={() => fetchPasswords()}
-					color={"blue"}
-				/>
+			<div style={{display: "inline-flex"}}>
 				<Input
 					type="text"
 					placeholder="Query"
 					value={query}
 					onChange={(e) => setQuery(e.target.value)}
+				/>
+				<IconButton
+					icon={<MdRefresh/>}
+					onClick={() => fetchPasswords()}
+					color={"blue"}
 				/>
 
 			</div>

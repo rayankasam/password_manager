@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { Spoiler } from 'react-spoiler-tag';
-import 'react-spoiler-tag/dist/index.css';
+import Spoiler from "./spoilerTag";
 import { Button, Input } from "@chakra-ui/react";
 import { MdEdit, MdDeleteOutline, MdCheck } from "react-icons/md";
 const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc, isTop = false }) => {
