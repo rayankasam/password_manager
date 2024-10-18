@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Heading, Button } from '@chakra-ui/react';
 import { host } from '../connection';
 const TestConnection = () => {

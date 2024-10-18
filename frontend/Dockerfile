@@ -1,21 +1,22 @@
-# pull official base image
-FROM node:13.12.0-alpine as build
+# Stage 1: Build the Vite app
+FROM node:18-alpine AS build
 
 WORKDIR /app
 
-ENV PATH /app/node_modules/.bin:$PATH
-COPY package.json package-lock.json ./
-RUN npm install --silent
+COPY package*.json ./
 
-COPY . ./
+RUN npm install
+
+COPY . .
 
 RUN npm run build
 
-# Stage 2: Serve the React app using Nginx
+# Stage 2: Serve the app using nginx
 FROM nginx:alpine
 
-COPY --from=build /app/build /usr/share/nginx/html
+COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80
 
 CMD ["nginx", "-g", "daemon off;"]
+

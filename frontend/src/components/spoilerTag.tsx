@@ -1,6 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
-const Spoiler = ({ text }) => {
+interface SpoilerProps {
+	text: string;
+}
+const Spoiler = ({ text }: SpoilerProps) => {	
 	const [isHidden, setIsHidden] = useState(true);
 
 	const handleClick = () => {

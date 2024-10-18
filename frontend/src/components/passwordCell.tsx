@@ -2,13 +2,22 @@ import React, { useState } from "react";
 import Spoiler from "./spoilerTag";
 import { Button, Input } from "@chakra-ui/react";
 import { MdEdit, MdDeleteOutline, MdCheck } from "react-icons/md";
-const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc, isTop = false }) => {
+interface PasswordCellProps {
+	id: number,
+	platform: string,
+	username: string,
+	password: string,
+	updateFunc?: (id: number, jsonstring: string) => void,
+	deleteFunc?: (id: number) => void,
+	isTop?: boolean,
+}
+const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc, isTop = false } :PasswordCellProps) => {
 	const [editing, setEditing] = useState(false)
 	const [platformEdit, setPlatformEdit] = useState(platform)
 	const [usernameEdit, setUsernameEdit] = useState(username)
 	const [passwordEdit, setPasswordEdit] = useState(password)
 	const handleConfirmEdit = () => {
-		const updatedEntry = {}
+		const updatedEntry: { platform?: string; username?: string; password?: string } = {};
 		if (platformEdit !== platform) {
 			updatedEntry.platform = platformEdit
 			console.log("New platform is: " + platformEdit)
@@ -21,7 +30,7 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 			updatedEntry.password = passwordEdit
 			console.log("New password is: " + passwordEdit)
 		}
-		if (Object.keys(updatedEntry).length > 0) {
+		if (Object.keys(updatedEntry).length > 0 && updateFunc) {
 			const jsonString = JSON.stringify(updatedEntry)
 			updateFunc(id, jsonString)
 			console.log("Update json is: " + jsonString)
@@ -38,13 +47,13 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 					<div style={infoStyle}>
 						{isTop ? password : <Spoiler text={password} />}
 					</div>
-					{!isTop &&
+					{!isTop && deleteFunc &&
 						<div>
 							<Button
 								leftIcon={<MdDeleteOutline />}
 								colorScheme="red"
 								onClick={() => deleteFunc(id)}
-								style={{marginRight: '10px'}}
+								style={{ marginRight: '10px' }}
 							>Delete</Button>
 							<Button
 								leftIcon={<MdEdit />}
@@ -86,7 +95,7 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 	)
 };
 export default PasswordCell;
-const containerStyle = {
+const containerStyle: React.CSSProperties = {
 	display: 'grid',
 	gridTemplateColumns: '1fr 1fr 1fr 1fr',
 	alignItems: 'center',
@@ -96,7 +105,7 @@ const containerStyle = {
 	margin: '10px 0',
 	backgroundColor: '#f9f9f9'
 };
-const infoStyle = {
+const infoStyle : React.CSSProperties= {
 	textAlign: 'left',
 	padding: '0 10px',
 };

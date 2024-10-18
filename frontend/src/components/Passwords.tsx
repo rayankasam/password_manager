@@ -1,20 +1,30 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import PasswordCell from './passwordCell';
-import { Heading, Button, Input, Alert, IconButton } from '@chakra-ui/react';
+import { Heading, Input, Alert, IconButton } from '@chakra-ui/react';
 import AddPassword from './AddPassword'
 import { MdAdd, MdRefresh } from "react-icons/md";
 import { host } from '../connection';
-const Passwords = ({ uid }) => {
+interface PasswordsProps {
+	uid: number
+}
+interface PasswordEntry {
+  id: number;
+  platform: string;
+  user: string;
+  password: string;
+}
+
+const Passwords = ({ uid }: PasswordsProps) => {
 	const [query, setQuery] = useState("");
 	const [status, setStatus] = useState("");
-	const [entries, setEntries] = useState([]);
+	const [entries, setEntries] = useState<PasswordEntry[]>([]);
 	const [addingPassword, setAddingPassword] = useState(false);
 	useEffect(() => {
 		if (status !== '') {
 			setTimeout(() => setStatus(''), 4000)
 		}
 	}, [status])
-	const deletePassword = async (id) => {
+	const deletePassword = async (id: number) => {
 		if (isNaN(id)) {
 			setStatus("Invalid entry, must be an id (int)")
 		}
@@ -36,7 +46,7 @@ const Passwords = ({ uid }) => {
 			setStatus('Error deleting password:' + error)
 		}
 	};
-	const updateEntryFunc = async (id, jsonString) => {
+	const updateEntryFunc = async (id: number, jsonString: string) => {
 		try {
 			const response = await fetch(host + '/update_password/' + id, {
 				method: 'PUT',
@@ -49,7 +59,7 @@ const Passwords = ({ uid }) => {
 			fetchPasswords()
 			setStatus(data.message)
 		} catch (error) {
-			setStatus('Error updating entry:', error);
+			setStatus('Error updating entry: ' + error);
 		}
 	}
 	const fetchPasswords = async () => {
@@ -73,7 +83,7 @@ const Passwords = ({ uid }) => {
 	return (
 		<div style={{ alignItems: "center" }}>
 			<Heading>Passwords</Heading>
-			<div style={{display: "inline-flex"}}>
+			<div style={{ display: "inline-flex" }}>
 				<Input
 					type="text"
 					placeholder="Query"
@@ -81,7 +91,8 @@ const Passwords = ({ uid }) => {
 					onChange={(e) => setQuery(e.target.value)}
 				/>
 				<IconButton
-					icon={<MdRefresh/>}
+					aria-label={"Refresh the passwords list"}
+					icon={<MdRefresh />}
 					onClick={() => fetchPasswords()}
 					color={"blue"}
 				/>

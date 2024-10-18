@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import './App.css';
 import Passwords from './components/Passwords.jsx'
 import TestConnection from './components/TestConnection.jsx';

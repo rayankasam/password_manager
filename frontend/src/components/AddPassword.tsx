@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import { Input, Button, Heading, InputGroup, InputRightElement, IconButton } from '@chakra-ui/react';
 import { MdRemove } from "react-icons/md";
 import { host } from '../connection';
-const AddPassword = ({ uid, setAddingPassword, setStatus }) => {
+interface AddPasswordProps {
+	uid: number,
+	setAddingPassword: (value: boolean) => void,
+	setStatus: (status: string) => void
+}
+const AddPassword = ({ uid, setAddingPassword, setStatus }: AddPasswordProps) => {
 	const [platform, setPlatform] = useState('');
 	const [user, setUser] = useState('');
 	const [password, setPassword] = useState('');
 	const [show, setShow] = useState(false);
 	const handleClickShow = () => setShow(!show)
-	const handleSubmit = async (e) => {
+	const handleSubmit = async (e: any) => {
 		e.preventDefault();
 		if (platform === "") { setStatus("No platform"); return }
 		if (user === "") { setStatus("No username"); return }
@@ -74,7 +79,7 @@ const AddPassword = ({ uid, setAddingPassword, setStatus }) => {
 };
 
 export default AddPassword;
-const formStyle = {
+const formStyle: React.CSSProperties = {
 	display: 'flex',
 	alignItems: 'center',
 	flexDirection: 'column'
