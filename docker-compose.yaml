@@ -21,13 +21,14 @@ services:
     container_name: pm_api
     stdin_open: true
     tty: true
+    ports:
+      - "1234:8080"
     environment:
       DATABASE_URL: postgres://password:password123@pm_db/password-db
     depends_on:
       - db
     networks:
       - password-manager-net
-      - nginx-proxy-net
 
   app:
     build:
@@ -36,19 +37,16 @@ services:
     container_name: pm_app
     stdin_open: true
     tty: true
+    ports:
+      - "4000:80"
     environment:
-      API_URL: 'apipm.rayan.lol/api'
+      API_URL: ${API_URL:-http://localhost:1234/api}
     depends_on:
       - api
-    networks:
-      - nginx-proxy-net
 
 volumes:
   db:
 
 networks:
-  nginx-proxy-net:
-    external:
-      name: nginx-proxy-net
   password-manager-net:
     driver: bridge

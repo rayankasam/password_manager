@@ -1,0 +1,14 @@
+services:
+  app:
+    environment:
+      API_URL: ${API_URL:-https://pm.rayan.lol/api}
+    networks:
+      - nginx-proxy-net
+  api:
+    networks:
+      - nginx-proxy-net
+      - password-manager-net
+networks:
+  nginx-proxy-net:
+    external:
+      name: nginx-proxy-net
