@@ -11,9 +11,7 @@ services:
     volumes:
       - ./db:/var/lib/postgresql/data
     networks:
-      password-manager-net:
-        aliases:
-          - db
+      - password-manager-net
 
   api:
     build:
@@ -23,19 +21,13 @@ services:
     container_name: pm_api
     stdin_open: true
     tty: true
-    ports:
-      - "1234:8080"
     environment:
-      DATABASE_URL: postgres://password:password123@db/password-db
+      DATABASE_URL: postgres://password:password123@pm_db/password-db
     depends_on:
       - db
     networks:
-      password-manager-net:
-        aliases:
-          - pm_api
-      nginx-proxy-net:
-        aliases:
-          - pm_api
+      - password-manager-net
+      - nginx-proxy-net
 
   app:
     build:
@@ -45,13 +37,11 @@ services:
     stdin_open: true
     tty: true
     environment:
-      API_URL: '/api'
+      API_URL: 'apipm.rayan.lol/api'
     depends_on:
       - api
     networks:
-      nginx-proxy-net:
-        aliases:
-          - pm_app
+      - nginx-proxy-net
 
 volumes:
   db:
