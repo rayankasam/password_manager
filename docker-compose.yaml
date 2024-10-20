@@ -39,8 +39,6 @@ services:
     tty: true
     ports:
       - "4000:80"
-    environment:
-      API_URL: ${API_URL:-http://localhost:1234/api}
     depends_on:
       - api
 
