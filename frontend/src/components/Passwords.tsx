@@ -81,7 +81,7 @@ const Passwords = ({ uid }: PasswordsProps) => {
 		fetchPasswords();
 	}, [query]);
 	return (
-		<div style={{ alignItems: "center" }}>
+		<div style={{ alignItems: "center", height: "100vh", width: "50vw" }}>
 			<Heading>Passwords</Heading>
 			<div style={{ display: "inline-flex" }}>
 				<Input

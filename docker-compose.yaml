@@ -47,4 +47,5 @@ volumes:
 
 networks:
   password-manager-net:
+    name: password-manager-net
     driver: bridge
