@@ -66,32 +66,20 @@ git clone https://github.com/yourusername/password-manager-api.git
 cd password-manager-api
 ```
 
-#### Build the Docker Image
+#### Build and run the Docker Images
 
 ```sh
-docker build -t password-manager-api .
+docker-compose up --build 
 ```
-
-#### Run the Docker Container
-
-```sh
-docker run -d -p 8080:8080 --name password-manager-api password-manager-api
-```
+> [!note]
+> Make sure to add them to your Nginx Proxy Manager network
 
 ### Configuration
 
-- **Environment Variables**: Configure your database connection and JWT secret in a `.env` file or through environment variables.
+- **Environment Variables**: Configure your JWT secret in a `.env` file in the backend directory or through environment variables.
 
   ```env
-  DATABASE_URL=postgres://user:password@localhost/dbname
   JWT_SECRET=your_secret_key
-  ```
-
-- **Database Migration**: Apply database migrations if necessary.
-
-  ```sh
-  # Using Diesel CLI, for example
-  diesel migration run
   ```
 
 ## Usage
