@@ -1,7 +1,7 @@
 use crate::database::establish_connection;
 use crate::models::{NewUser, NewUserReq, User};
 use crate::schema::users;
-use crate::MyResponse;
+use crate::models::MyResponse;
 use actix_web::{web, HttpResponse, Responder};
 use argon2::{
     password_hash::{PasswordHasher, SaltString},

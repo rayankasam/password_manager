@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Alert, Input, Button, Heading } from "@chakra-ui/react";
 import { host } from "../connection";
 interface LoginProps {
-	setUid: (uid: number) => void
+	setToken: (token: string) => void
 }
-function Login({ setUid }: LoginProps) {
+function Login({ setToken: setToken }: LoginProps) {
 	const [password, setPassword] = useState("");
 	const [passwordTest, setPasswordTest] = useState("");
 	const [username, setUsername] = useState("");
@@ -43,7 +43,7 @@ function Login({ setUid }: LoginProps) {
 			if (response.ok) {
 				setStatus(`Success ${action}!`);
 				if (!isRegisterMode) {
-					setUid(resData.id); // Only set UID if logging in
+					setToken(resData.token); // Only set Token if logging in
 				}
 			} else {
 				setStatus(resData.message || `Error ${action}`);

@@ -1,8 +1,8 @@
 use crate::database::establish_connection;
 use crate::schema::password_entries;
-use crate::{ExtraInfo, PasswordEntry, PasswordResEntry};
-use crate::models::*;
-use actix_web::{web, HttpResponse, Responder};
+use crate::models::{ExtraInfo, PasswordEntry, PasswordResEntry, MyResponse};
+use crate::jwt::Claims;
+use actix_web::{web, HttpRequest, HttpResponse, Responder, HttpMessage};
 use diesel::result::Error;
 use diesel::{BelongingToDsl, ExpressionMethods, QueryDsl, RunQueryDsl};
 use serde::Deserialize;
@@ -14,18 +14,23 @@ pub struct QueryParams {
     query: Option<String>,
 }
 pub async fn get_passwords(
-    uid: web::Path<i32>,
-    query_params: web::Query<QueryParams>,
-) -> impl Responder {
+    req: HttpRequest, 
+    query_params: web::Query<QueryParams>
+    ) -> impl Responder { 
+    let claims: Claims = match req.extensions().get::<Claims>().cloned() { 
+        Some(claims) => claims,
+        _ => return HttpResponse::BadGateway().json(MyResponse {message: "No Claims found".to_string()})
+    };
+    let uid = claims.id;
     let query_str = match query_params.into_inner().query {
         Some(a) => a,
-        None => String::from(""),
+        _ => String::from(""),
     };
     let conn = &mut establish_connection();
 
     let entries_result: Result<Vec<PasswordEntry>, Error> = conn.build_transaction().run(|conn| {
         password_entries::table
-            .filter(password_entries::user_id.eq(uid.into_inner()))
+            .filter(password_entries::user_id.eq(uid))
             .filter(password_entries::platform.ilike(format!("%{}%", query_str)))
             .limit(5)
             .select(PasswordEntry::as_select())

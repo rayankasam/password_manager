@@ -10,6 +10,7 @@ pub struct PasswordEntry {
     pub platform: String,
     pub user: String,
     pub password: String,
+    pub user_id: i32
 }
 #[derive(Insertable, Selectable, Queryable, Clone)]
 #[diesel(table_name = crate::schema::users)]
@@ -78,7 +79,6 @@ pub struct PasswordResEntry {
 }
 #[derive(Serialize, Deserialize, Clone)]
 pub struct PasswordReq {
-    pub user_id: i32,
     pub platform: String,
     pub user: String,
     pub password: String,
@@ -104,6 +104,6 @@ pub struct LoginReq {
 }
 #[derive(Serialize, Deserialize)]
 pub struct SuccessfulLogin {
-    pub id: i32,
+    pub token: String,
     pub message: String
 }

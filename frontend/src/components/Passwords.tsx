@@ -5,7 +5,7 @@ import AddPassword from './AddPassword'
 import { MdAdd, MdRefresh } from "react-icons/md";
 import { host } from '../connection';
 interface PasswordsProps {
-	uid: number
+	token: string
 }
 interface PasswordEntry {
   id: number;
@@ -14,7 +14,7 @@ interface PasswordEntry {
   password: string;
 }
 
-const Passwords = ({ uid }: PasswordsProps) => {
+const Passwords = ({ token }: PasswordsProps) => {
 	const [query, setQuery] = useState("");
 	const [status, setStatus] = useState("");
 	const [entries, setEntries] = useState<PasswordEntry[]>([]);
@@ -35,6 +35,7 @@ const Passwords = ({ uid }: PasswordsProps) => {
 				method: 'DELETE',
 				headers: {
 					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
 				},
 				body: JSON.stringify({ id }),
 			});
@@ -52,22 +53,25 @@ const Passwords = ({ uid }: PasswordsProps) => {
 				method: 'PUT',
 				headers: {
 					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
 				},
 				body: jsonString
 			});
 			const data = await response.json();
-			fetchPasswords()
 			setStatus(data.message)
 		} catch (error) {
 			setStatus('Error updating entry: ' + error);
 		}
+		setTimeout(() => fetchPasswords(), 200);
+		
 	}
 	const fetchPasswords = async () => {
 		try {
-			const response = await fetch(host + `/get_password/${uid}?query=${encodeURIComponent(query)}`, {
+			const response = await fetch(host + `/get_password?query=${encodeURIComponent(query)}`, {
 				method: 'GET',
 				headers: {
 					'Content-Type': 'application/json',
+					'Authorization': `Bearer ${token}`
 				},
 			});
 			const data = await response.json();
@@ -75,6 +79,7 @@ const Passwords = ({ uid }: PasswordsProps) => {
 		} catch (error) {
 			setStatus('Error fetching passwords: ' + error);
 		}
+		console.log(token);
 	};
 
 	useEffect(() => {
@@ -123,7 +128,7 @@ const Passwords = ({ uid }: PasswordsProps) => {
 				</ul>
 			)}
 			{addingPassword ?
-				<AddPassword uid={uid} setAddingPassword={setAddingPassword} setStatus={setStatus} />
+				<AddPassword token={token} setAddingPassword={setAddingPassword} setStatus={setStatus} />
 				:
 				<IconButton
 					colorScheme={'blue'}

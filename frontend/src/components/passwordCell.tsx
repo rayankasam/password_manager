@@ -17,13 +17,13 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 	const [usernameEdit, setUsernameEdit] = useState(username)
 	const [passwordEdit, setPasswordEdit] = useState(password)
 	const handleConfirmEdit = () => {
-		const updatedEntry: { platform?: string; username?: string; password?: string } = {};
+		const updatedEntry: { platform?: string; user?: string; password?: string } = {};
 		if (platformEdit !== platform) {
 			updatedEntry.platform = platformEdit
 			console.log("New platform is: " + platformEdit)
 		}
 		if (usernameEdit !== username) {
-			updatedEntry.username = usernameEdit
+			updatedEntry.user = usernameEdit
 			console.log("New username is: " + usernameEdit)
 		}
 		if (passwordEdit !== password) {

@@ -13,6 +13,10 @@ dotenvy = "0.15.6"
 serde_qs = "0.13.0"
 argon2 = "0.5.3"
 rand_core = "0.6.4"
+chrono = "0.4.37"
+jsonwebtoken = "9.3.0"
+futures = "0.3"
+env_logger = "0.11.5"
 
 [[bin]]
 name = "password_manager"

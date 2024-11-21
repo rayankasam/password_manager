@@ -3,11 +3,11 @@ import { Input, Button, Heading, InputGroup, InputRightElement, IconButton } fro
 import { MdRemove } from "react-icons/md";
 import { host } from '../connection';
 interface AddPasswordProps {
-	uid: number,
+	token: string,
 	setAddingPassword: (value: boolean) => void,
 	setStatus: (status: string) => void
 }
-const AddPassword = ({ uid, setAddingPassword, setStatus }: AddPasswordProps) => {
+const AddPassword = ({ token, setAddingPassword, setStatus }: AddPasswordProps) => {
 	const [platform, setPlatform] = useState('');
 	const [user, setUser] = useState('');
 	const [password, setPassword] = useState('');
@@ -19,7 +19,6 @@ const AddPassword = ({ uid, setAddingPassword, setStatus }: AddPasswordProps) =>
 		if (user === "") { setStatus("No username"); return }
 		if (password === "") { setStatus("No password"); return }
 		const body = JSON.stringify({
-			user_id: uid,
 			platform,
 			user,
 			password,
@@ -29,6 +28,7 @@ const AddPassword = ({ uid, setAddingPassword, setStatus }: AddPasswordProps) =>
 			method: 'POST',
 			headers: {
 				'Content-Type': 'application/json',
+				'Authorization': `Bearer ${token}`
 			},
 			body: body,
 		});

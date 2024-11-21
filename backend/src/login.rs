@@ -1,4 +1,5 @@
 use crate::database::establish_connection;
+use crate::jwt::encode_jwt;
 use crate::schema::users;
 use crate::{models::*, schema::users::username};
 use actix_web::{web, HttpResponse, Responder};
@@ -35,17 +36,15 @@ pub async fn login(req: web::Json<LoginReq>) -> impl Responder {
             })
         }
     };
-    let password_hash = match users.first() {
-        Some(user) => PasswordHash::new(&user.password_hash).expect("Password hashing failed"),
-        None => unreachable!("No user not possible at this stage"),
-    };
+    let password_hash = PasswordHash::new(&user.password_hash).expect("Password hashing failed");
+    let token = encode_jwt(user.id).unwrap();
     match Argon2::default()
         .verify_password(&user_login.password.into_bytes(), &password_hash)
         .is_ok()
     {
         true => HttpResponse::Ok().json(SuccessfulLogin {
             message: "Logged in succesfully".to_string(),
-            id: user.id,
+            token
         }),
         false => HttpResponse::Unauthorized().json(MyResponse {
             message: "Incorrect Password".to_string(),
