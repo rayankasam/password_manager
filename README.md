@@ -225,6 +225,3 @@ Contributions are welcome! Please open an issue or submit a pull request on GitH
 This project is licensed under the MIT License.
 
 ---
-
-*Placeholder for additional images and diagrams explaining the architecture and request flow.*
-
