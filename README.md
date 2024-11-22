@@ -2,7 +2,7 @@
 
 A secure, self-hosted password manager API built with Rust and Actix-web, designed to keep your credentials safe and accessible. This API allows you to manage passwords through a set of endpoints, protected by JWT authentication, and can be easily deployed using Nginx Proxy Manager for SSL termination and domain management.
 
-The instance I use can be found [here](pm.rayan.lol)
+The instance I use can be found [here](https://pm.rayan.lol)
 
 ## Table of Contents
 
