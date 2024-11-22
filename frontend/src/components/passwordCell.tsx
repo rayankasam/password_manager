@@ -1,111 +1,157 @@
 import React, { useState } from "react";
 import Spoiler from "./spoilerTag";
-import { Button, Input } from "@chakra-ui/react";
+import { Button, Input, useColorModeValue, Box, Flex, useBreakpointValue } from "@chakra-ui/react";
 import { MdEdit, MdDeleteOutline, MdCheck } from "react-icons/md";
-interface PasswordCellProps {
-	id: number,
-	platform: string,
-	username: string,
-	password: string,
-	updateFunc?: (id: number, jsonstring: string) => void,
-	deleteFunc?: (id: number) => void,
-	isTop?: boolean,
-}
-const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc, isTop = false } :PasswordCellProps) => {
-	const [editing, setEditing] = useState(false)
-	const [platformEdit, setPlatformEdit] = useState(platform)
-	const [usernameEdit, setUsernameEdit] = useState(username)
-	const [passwordEdit, setPasswordEdit] = useState(password)
-	const handleConfirmEdit = () => {
-		const updatedEntry: { platform?: string; user?: string; password?: string } = {};
-		if (platformEdit !== platform) {
-			updatedEntry.platform = platformEdit
-			console.log("New platform is: " + platformEdit)
-		}
-		if (usernameEdit !== username) {
-			updatedEntry.user = usernameEdit
-			console.log("New username is: " + usernameEdit)
-		}
-		if (passwordEdit !== password) {
-			updatedEntry.password = passwordEdit
-			console.log("New password is: " + passwordEdit)
-		}
-		if (Object.keys(updatedEntry).length > 0 && updateFunc) {
-			const jsonString = JSON.stringify(updatedEntry)
-			updateFunc(id, jsonString)
-			console.log("Update json is: " + jsonString)
-		}
-		setEditing(false)
-	}
 
-	return (
-		<>
-			{!editing ?
-				<div style={containerStyle}>
-					<div style={infoStyle}>{platform}</div>
-					<div style={infoStyle}>{username}</div>
-					<div style={infoStyle}>
-						{isTop ? password : <Spoiler text={password} />}
-					</div>
-					{!isTop && deleteFunc &&
-						<div>
-							<Button
-								leftIcon={<MdDeleteOutline />}
-								colorScheme="red"
-								onClick={() => deleteFunc(id)}
-								style={{ marginRight: '10px' }}
-							>Delete</Button>
-							<Button
-								leftIcon={<MdEdit />}
-								colorScheme="blue"
-								onClick={() => setEditing(true)}
-							>Edit</Button>
-						</div>
-					}
-				</div>
-				:
-				<div style={containerStyle}>
-					<Input
-						style={infoStyle}
-						placeholder={platform}
-						onChange={(e) => setPlatformEdit(e.target.value)}
-						value={platformEdit} />
-					<Input
-						style={infoStyle}
-						placeholder={username}
-						onChange={(e) => setUsernameEdit(e.target.value)}
-						value={usernameEdit} />
-					<Input
-						style={infoStyle}
-						placeholder={password}
-						onChange={(e) => setPasswordEdit(e.target.value)}
-						value={passwordEdit} />
-					{!isTop &&
-						<div>
-							<Button
-								leftIcon={<MdCheck />}
-								colorScheme="green"
-								onClick={handleConfirmEdit}
-							>Confirm</Button>
-						</div>
-					}
-				</div>
-			}
-		</>
-	)
+interface PasswordCellProps {
+  id: number;
+  platform: string;
+  username: string;
+  password: string;
+  updateFunc?: (id: number, jsonstring: string) => void;
+  deleteFunc?: (id: number) => void;
+  isTop?: boolean;
+}
+
+const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc, isTop = false }: PasswordCellProps) => {
+  const [editing, setEditing] = useState(false);
+  const [platformEdit, setPlatformEdit] = useState(platform);
+  const [usernameEdit, setUsernameEdit] = useState(username);
+  const [passwordEdit, setPasswordEdit] = useState(password);
+
+  const containerBgColor = useColorModeValue("white", "gray.700");
+  const containerTextColor = useColorModeValue("black", "gray.100");
+  const inputBgColor = useColorModeValue("white", "gray.600");
+
+  const flexDirection = useBreakpointValue({ base: 'column', lg: 'row' });
+  const buttonWidth = useBreakpointValue({ base: '100%', lg: 'auto' });
+  const buttonSpacing = useBreakpointValue({ base: 2, lg: 0 });
+
+  const handleConfirmEdit = () => {
+    const updatedEntry: { platform?: string; user?: string; password?: string } = {};
+    if (platformEdit !== platform) {
+      updatedEntry.platform = platformEdit;
+      console.log("New platform is: " + platformEdit);
+    }
+    if (usernameEdit !== username) {
+      updatedEntry.user = usernameEdit;
+      console.log("New username is: " + usernameEdit);
+    }
+    if (passwordEdit !== password) {
+      updatedEntry.password = passwordEdit;
+      console.log("New password is: " + passwordEdit);
+    }
+    if (Object.keys(updatedEntry).length > 0 && updateFunc) {
+      const jsonString = JSON.stringify(updatedEntry);
+      updateFunc(id, jsonString);
+      console.log("Update json is: " + jsonString);
+    }
+    setEditing(false);
+  };
+
+  return (
+    <Box mb={4} width="100%" boxShadow="lg" borderRadius="md">
+      {!editing ? (
+        <Flex
+          direction={{ base: "column", lg: "row" }}
+          bg={containerBgColor}
+          color={containerTextColor}
+          p={4}
+          borderRadius="10px"
+          border="1px solid #ccc"
+          align="center"
+          justify="space-between"
+        >
+          <Box textAlign="left" flex="1" fontWeight="bold" mb={{ base: 2, lg: 0 }}>{platform}</Box>
+          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}>{username}</Box>
+          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}>{isTop ? password : <Spoiler text={password} />}</Box>
+          {!isTop && deleteFunc ? 
+            <Flex direction={{ base: "column", lg: "row" }} ml={{ lg: 4 }} justifyContent="flex-end">
+              <Button
+                leftIcon={<MdDeleteOutline />}
+                colorScheme="red"
+                onClick={() => deleteFunc(id)}
+                mb={{ base: 2, lg: 0 }}
+                width={buttonWidth}
+                mr={{ base: 0, lg: 2 }}
+                size="sm"
+              >
+                Delete
+              </Button>
+              <Button
+                leftIcon={<MdEdit />}
+                colorScheme="blue"
+                onClick={() => setEditing(true)}
+                width={buttonWidth}
+                size="sm"
+              >
+                Edit
+              </Button>
+            </Flex>
+	    :
+          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}></Box>
+          }
+        </Flex>
+      ) : (
+        <Flex direction="column" bg={containerBgColor} color={containerTextColor} p={4} borderRadius="10px" border="1px solid #ccc" align="flex-start" justify="space-between">
+          <Input
+            placeholder={platform}
+            onChange={(e) => setPlatformEdit(e.target.value)}
+            value={platformEdit}
+            bg={inputBgColor}
+            color={containerTextColor}
+            mb={2}
+            size="sm"
+          />
+          <Input
+            placeholder={username}
+            onChange={(e) => setUsernameEdit(e.target.value)}
+            value={usernameEdit}
+            bg={inputBgColor}
+            color={containerTextColor}
+            mb={2}
+            size="sm"
+          />
+          <Input
+            placeholder={password}
+            onChange={(e) => setPasswordEdit(e.target.value)}
+            value={passwordEdit}
+            bg={inputBgColor}
+            color={containerTextColor}
+            mb={2}
+            size="sm"
+          />
+          {!isTop ?
+            <Button
+              leftIcon={<MdCheck />}
+              colorScheme="green"
+              onClick={handleConfirmEdit}
+              mt={2}
+              width="100%"
+              size="sm"
+            >
+              Confirm
+            </Button>
+          : 
+		  <p>Hello</p>
+	  }
+        </Flex>
+      )}
+    </Box>
+  );
 };
+
 export default PasswordCell;
+
 const containerStyle: React.CSSProperties = {
-	display: 'grid',
-	gridTemplateColumns: '1fr 1fr 1fr 1fr',
-	alignItems: 'center',
-	border: '1px solid #ccc',
-	borderRadius: '10px',
-	padding: '10px',
-	margin: '10px 0',
-	backgroundColor: '#f9f9f9'
+  width: '100%',
+  maxWidth: '600px'
 };
-const infoStyle : React.CSSProperties= {
-	textAlign: 'left',
-	padding: '0 10px',
+
+const infoStyle: React.CSSProperties = {
+  textAlign: 'left',
+  padding: '0 10px',
+  overflow: 'hidden',
+  textOverflow: 'ellipsis',
+  whiteSpace: 'nowrap'
 };
