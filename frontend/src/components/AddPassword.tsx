@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Input, Button, Heading, InputGroup, InputRightElement, IconButton, Box, useColorModeValue, VStack } from '@chakra-ui/react';
 import { MdRemove } from "react-icons/md";
 import { host } from '../connection';
@@ -98,9 +98,3 @@ const AddPassword = ({ token, setAddingPassword, setStatus }: AddPasswordProps) 
 };
 
 export default AddPassword;
-
-const formStyle: React.CSSProperties = {
-  display: 'flex',
-  alignItems: 'center',
-  flexDirection: 'column'
-};

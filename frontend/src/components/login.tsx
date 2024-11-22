@@ -130,14 +130,6 @@ function Login({ setToken }: LoginProps) {
 
 export default Login;
 
-const formContainerStyle: React.CSSProperties = {
-  display: "flex",
-  justifyContent: "center",
-  alignItems: "center",
-  height: "100vh",
-  padding: "20px",
-};
-
 const formStyle: React.CSSProperties = {
   display: "flex",
   flexDirection: "column",
@@ -174,13 +166,4 @@ const buttonStyle: React.CSSProperties = {
 
 const buttonHoverStyle: React.CSSProperties = {
   backgroundColor: "#0056b3",
-};
-
-const toggleButtonStyle: React.CSSProperties = {
-  marginTop: "10px",
-  color: "#007bff",
-  backgroundColor: "transparent",
-  cursor: "pointer",
-  textDecoration: "underline",
-  border: "none",
 };

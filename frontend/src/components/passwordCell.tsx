@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import Spoiler from "./spoilerTag";
 import { Button, Input, useColorModeValue, Box, Flex, useBreakpointValue } from "@chakra-ui/react";
 import { MdEdit, MdDeleteOutline, MdCheck } from "react-icons/md";
@@ -23,9 +23,7 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
   const containerTextColor = useColorModeValue("black", "gray.100");
   const inputBgColor = useColorModeValue("white", "gray.600");
 
-  const flexDirection = useBreakpointValue({ base: 'column', lg: 'row' });
   const buttonWidth = useBreakpointValue({ base: '100%', lg: 'auto' });
-  const buttonSpacing = useBreakpointValue({ base: 2, lg: 0 });
 
   const handleConfirmEdit = () => {
     const updatedEntry: { platform?: string; user?: string; password?: string } = {};
@@ -142,16 +140,3 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
 };
 
 export default PasswordCell;
-
-const containerStyle: React.CSSProperties = {
-  width: '100%',
-  maxWidth: '600px'
-};
-
-const infoStyle: React.CSSProperties = {
-  textAlign: 'left',
-  padding: '0 10px',
-  overflow: 'hidden',
-  textOverflow: 'ellipsis',
-  whiteSpace: 'nowrap'
-};
