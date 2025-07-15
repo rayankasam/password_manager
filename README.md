@@ -80,8 +80,8 @@ docker-compose up --build
 
 - **Environment Variables**: Configure your JWT secret in a `.env` file in the backend directory or through environment variables.
 
-  ```env
-  JWT_SECRET=your_secret_key
+```env
+  SECRET_KEY=your_secret_key
   ```
 
 ## Usage
@@ -96,7 +96,7 @@ docker-compose up --build
 - **Register New User**
   - `POST /api/new_user`
   - **Body**:
-    ```json
+```json
     {
       "username": "your_username",
       "password": "your_password"
@@ -106,14 +106,14 @@ docker-compose up --build
 - **User Login**
   - `POST /api/login`
   - **Body**:
-    ```json
+```json
     {
       "username": "your_username",
       "password": "your_password"
     }
     ```
   - **Response**:
-    ```json
+```json
     {
       "token": "jwt_token_here"
     }
@@ -126,11 +126,11 @@ docker-compose up --build
 - **Add Password**
   - `POST /api/add_password`
   - **Headers**:
-    ```
+```
     Authorization: Bearer jwt_token_here
     ```
   - **Body**:
-    ```json
+```json
     {
       "site": "example.com",
       "username": "your_username",
@@ -141,11 +141,11 @@ docker-compose up --build
 - **Delete Password**
   - `DELETE /api/del_password`
   - **Headers**:
-    ```
+```
     Authorization: Bearer jwt_token_here
-    ```
+```
   - **Body**:
-    ```json
+```json
     {
       "password_id": 1
     }
@@ -154,18 +154,18 @@ docker-compose up --build
 - **Get Passwords**
   - `GET /api/get_password?query=search_term`
   - **Headers**:
-    ```
+```
     Authorization: Bearer jwt_token_here
     ```
 
 - **Update Password**
   - `PUT /api/update_password/{id}`
   - **Headers**:
-    ```
+```
     Authorization: Bearer jwt_token_here
     ```
   - **Body**:
-    ```json
+```json
     {
       "site": "new_example.com",
       "username": "new_username",
