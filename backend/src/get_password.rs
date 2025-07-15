@@ -9,9 +9,10 @@ use serde::Deserialize;
 use std::collections::HashMap;
 use diesel::prelude::*;
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, Clone)]
 pub struct QueryParams {
     query: Option<String>,
+    limit: Option<i64>
 }
 pub async fn get_passwords(
     req: HttpRequest, 
@@ -22,23 +23,21 @@ pub async fn get_passwords(
         _ => return HttpResponse::BadGateway().json(MyResponse {message: "No Claims found".to_string()})
     };
     let uid = claims.id;
-    let query_str = match query_params.into_inner().query {
-        Some(a) => a,
-        _ => String::from(""),
-    };
+    let query_str = query_params.clone().into_inner().query.unwrap_or("".to_string());
+    let limit = query_params.clone().into_inner().limit.unwrap_or(5);
     let conn = &mut establish_connection();
 
     let entries_result: Result<Vec<PasswordEntry>, Error> = conn.build_transaction().run(|conn| {
         password_entries::table
             .filter(password_entries::user_id.eq(uid))
             .filter(password_entries::platform.ilike(format!("%{}%", query_str)))
-            .limit(5)
+            .limit(limit)
             .select(PasswordEntry::as_select())
             .load::<PasswordEntry>(conn)
     });
     match entries_result {
         Ok(password_entries) => {
-            let new_pass_entries: Vec<PasswordResEntry> = password_entries
+            let mut new_pass_entries: Vec<PasswordResEntry> = password_entries
                 .into_iter()
                 .map(|entry| {
                     let extra_info_entry: Option<HashMap<String, String>> = get_extra_info(&entry);
@@ -51,6 +50,7 @@ pub async fn get_passwords(
                     }
                 })
                 .collect();
+            new_pass_entries.sort_by(|a, b| a.platform.to_lowercase().cmp(&b.platform.to_lowercase()));
             HttpResponse::Ok().json(new_pass_entries)
         }
         Err(_) => HttpResponse::InternalServerError().json(MyResponse {message: "Error loading passwords".to_string()}),

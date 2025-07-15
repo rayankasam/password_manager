@@ -1,13 +1,25 @@
-import { useState, useEffect } from 'react';
-import PasswordCell from './passwordCell';
-import { Heading, Input, Alert, IconButton, useColorMode, Flex, Switch, useColorModeValue } from '@chakra-ui/react';
-import AddPassword from './AddPassword'
-import { MdAdd, MdRefresh } from "react-icons/md";
+import { useState, useEffect, useMemo } from 'react';
+import {
+  Heading,
+  Input,
+  Flex,
+  IconButton,
+  useColorMode,
+  useColorModeValue,
+  Switch,
+  Box,
+} from '@chakra-ui/react';
+import { MdAdd, MdRefresh, MdEdit, MdSave, MdClose, MdRemove, MdContentCopy } from 'react-icons/md';
+import { createColumnHelper } from '@tanstack/react-table';
 import { host } from '../connection';
+import TanStackTable from './TanStackTable';
+import AddPassword from './AddPassword';
+import EditableCell from './EditableCell';
 
 interface PasswordsProps {
   token: string;
 }
+
 interface PasswordEntry {
   id: number;
   platform: string;
@@ -17,15 +29,17 @@ interface PasswordEntry {
 
 const Passwords = ({ token }: PasswordsProps) => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState("");
+  const [query, setQuery] = useState('');
+  const [status, setStatus] = useState('');
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
   const [addingPassword, setAddingPassword] = useState(false);
+  const [limit, setLimit] = useState(5);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [editedEntry, setEditedEntry] = useState<PasswordEntry | null>(null);
 
-  const bgColor = useColorModeValue("transparent", "transparent");
-  const textColor = useColorModeValue("black", "white");
-  const inputBgColor = useColorModeValue("white", "gray.700");
-  const alertBgColor = useColorModeValue("gray.100", "gray.800");
+  const bgColor = useColorModeValue('transparent', 'transparent');
+  const textColor = useColorModeValue('black', 'white');
+  const inputBgColor = useColorModeValue('white', 'gray.700');
 
   useEffect(() => {
     if (status !== '') {
@@ -34,54 +48,50 @@ const Passwords = ({ token }: PasswordsProps) => {
   }, [status]);
 
   const deletePassword = async (id: number) => {
-    if (isNaN(id)) {
-      setStatus("Invalid entry, must be an id (int)");
-    }
-    console.log(id);
     try {
-      console.log(`Making request to /del_password`);
       const response = await fetch(host + '/del_password', {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify({ id }),
       });
       const resData = await response.json();
       fetchPasswords();
-      console.log(resData.message + "This one");
       setStatus(resData.message);
     } catch (error) {
-      setStatus('Error deleting password:' + error);
+      setStatus('Error deleting password: ' + error);
     }
   };
 
-  const updateEntryFunc = async (id: number, jsonString: string) => {
+  const updateEntryFunc = async (updatedEntry: PasswordEntry) => {
     try {
-      const response = await fetch(host + '/update_password/' + id, {
+      const response = await fetch(host + '/update_password/' + updatedEntry.id, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
-        body: jsonString
+        body: JSON.stringify(updatedEntry),
       });
       const data = await response.json();
       setStatus(data.message);
+      setEditId(null);
+      setEditedEntry(null);
+      fetchPasswords();
     } catch (error) {
       setStatus('Error updating entry: ' + error);
     }
-    setTimeout(() => fetchPasswords(), 200);
-  }
+  };
 
   const fetchPasswords = async () => {
     try {
-      const response = await fetch(host + `/get_password?query=${encodeURIComponent(query)}`, {
+      const response = await fetch(host + `/get_password?query=${encodeURIComponent(query)}&limit=${limit}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
         },
       });
       const data = await response.json();
@@ -89,20 +99,131 @@ const Passwords = ({ token }: PasswordsProps) => {
     } catch (error) {
       setStatus('Error fetching passwords: ' + error);
     }
-    console.log(token);
   };
 
   useEffect(() => {
     fetchPasswords();
-  }, [query]);
+  }, [query, limit]);
+
+  const columnHelper = createColumnHelper<PasswordEntry>();
+
+  const columns = useMemo(() => [
+    columnHelper.accessor('platform', {
+      header: 'Platform',
+      cell: ({ row }) =>
+        editId === row.original.id && editedEntry ? (
+          <EditableCell
+            value={editedEntry.platform}
+            onChange={(newValue) => setEditedEntry({ ...editedEntry, platform: newValue })}
+          />
+        ) : (
+          row.original.platform
+        ),
+    }),
+    columnHelper.accessor('user', {
+      header: 'Username',
+      cell: ({ row }) => (
+        <Flex align="center">
+          {editId === row.original.id && editedEntry ? (
+            <EditableCell
+              value={editedEntry.user}
+              onChange={(newValue) => setEditedEntry({ ...editedEntry, user: newValue })}
+            />
+          ) : (
+            row.original.user
+          )}
+          <IconButton
+            aria-label="Copy Username"
+            icon={<MdContentCopy />}
+            onClick={() => navigator.clipboard.writeText(row.original.user)}
+            colorScheme="gray"
+            size="sm"
+            ml={2}
+          />
+        </Flex>
+      ),
+    }),
+    columnHelper.accessor('password', {
+      header: 'Password',
+      cell: ({ row }) => (
+        <Flex align="center">
+          {editId === row.original.id && editedEntry ? (
+            <EditableCell
+              value={editedEntry.password}
+              onChange={(newValue) => setEditedEntry({ ...editedEntry, password: newValue })}
+            />
+          ) : (
+            '••••••••'
+          )}
+          <IconButton
+            aria-label="Copy Password"
+            icon={<MdContentCopy />}
+            onClick={() => navigator.clipboard.writeText(row.original.password)}
+            colorScheme="gray"
+            size="sm"
+            ml={2}
+          />
+        </Flex>
+      ),
+    }),
+    columnHelper.display({
+      id: 'actions',
+      cell: ({ row }) => (
+        <Flex>
+          {editId === row.original.id ? (
+            <>
+              <IconButton
+                aria-label="Save"
+                icon={<MdSave />}
+                onClick={() => {
+                  if (editedEntry) updateEntryFunc(editedEntry);
+                }}
+                colorScheme="green"
+                mr={2}
+              />
+              <IconButton
+                aria-label="Cancel"
+                icon={<MdClose />}
+                onClick={() => {
+                  setEditId(null);
+                  setEditedEntry(null);
+                  fetchPasswords();
+                }}
+                colorScheme="red"
+              />
+            </>
+          ) : (
+            <IconButton
+              aria-label="Edit"
+              icon={<MdEdit />}
+              onClick={() => {
+                setEditId(row.original.id);
+                setEditedEntry({ ...row.original });
+              }}
+              colorScheme="blue"
+              mr={2}
+            />
+          )}
+          <IconButton
+            aria-label="Delete"
+            icon={<MdRemove />}
+            onClick={() => deletePassword(row.original.id)}
+            colorScheme="red"
+          />
+        </Flex>
+      ),
+    }),
+  ], [editId, editedEntry]);
 
   return (
-    <Flex direction="column" align="center" height="100vh" width="50vw" p={4} bg={bgColor} color={textColor}>
-      <Flex justify="space-between" width="100%" maxWidth="600px" alignItems="center" mb={4}>
+    <Flex direction="column" align="center" height="100vh" width="100%" p={4} bg={bgColor} color={textColor}>
+      {/* UI layout same as before */}
+      {/* Table rendering same as before */}
+      <Flex justify="space-between" width="100%" maxWidth="800px" alignItems="center" mb={4}>
         <Heading color={textColor}>Passwords</Heading>
-        <Switch isChecked={colorMode === "dark"} onChange={toggleColorMode} />
+        <Switch isChecked={colorMode === 'dark'} onChange={toggleColorMode} />
       </Flex>
-      <Flex mb={4} width="100%" maxWidth="600px" alignItems="center">
+      <Flex mb={4} width="100%" maxWidth="800px" alignItems="center">
         <Input
           type="text"
           placeholder="Query"
@@ -112,48 +233,28 @@ const Passwords = ({ token }: PasswordsProps) => {
           color={textColor}
           mr={2}
         />
+        <Input
+          type="number"
+          placeholder="Limit"
+          value={limit}
+          onChange={(e) => setLimit(Number(e.target.value) || 5)}
+          bg={inputBgColor}
+          color={textColor}
+          mr={2}
+          width="100px"
+        />
         <IconButton
           aria-label="Refresh the passwords list"
           icon={<MdRefresh />}
           onClick={() => fetchPasswords()}
-          colorScheme={colorMode === "dark" ? "teal" : "blue"}
+          colorScheme={colorMode === 'dark' ? 'teal' : 'blue'}
         />
       </Flex>
-      {status && <Alert status="error" mb={4} bg={alertBgColor} color={textColor}>{status}</Alert>}
-      <ul style={{ width: "100%", listStyleType: "none", padding: 0 }}>
-        <PasswordCell
-          key={-1}
-          id={-1}
-          password="Password"
-          platform="Platform"
-          username="Username"
-          isTop={true}
-        />
-        {entries.length > 0 && entries.map((entry) => (
-          <PasswordCell
-            key={entry.id}
-            id={entry.id}
-            password={entry.password}
-            platform={entry.platform}
-            username={entry.user}
-            deleteFunc={deletePassword}
-            updateFunc={updateEntryFunc}
-          />
-        ))}
-      </ul>
-      {addingPassword ? (
-        <AddPassword token={token} setAddingPassword={setAddingPassword} setStatus={setStatus} />
-      ) : (
-        <IconButton
-          colorScheme='blue'
-          aria-label='Add a new password'
-          icon={<MdAdd />}
-          onClick={() => setAddingPassword(true)}
-          mt={4}
-        />
-      )}
+      {status && <Box mb={4} bg={useColorModeValue('gray.100', 'gray.800')} color={textColor} p={2}>{status}</Box>}
+      <TanStackTable columns={columns} data={entries} />
     </Flex>
   );
 };
 
 export default Passwords;
+
