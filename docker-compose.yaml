@@ -23,6 +23,7 @@ services:
     tty: true
     ports:
       - "8080:8080"
+    env_file: ".env"
     environment:
       DATABASE_URL: postgres://password:password123@pm_db/password-db
     depends_on:
