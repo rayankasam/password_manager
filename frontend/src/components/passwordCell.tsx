@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Spoiler from "./spoilerTag";
 import { Button, Input, useColorModeValue, Box, Flex, useBreakpointValue } from "@chakra-ui/react";
-import { MdEdit, MdDeleteOutline, MdCheck, MdOutlineContentCopy, MdContentCopy } from "react-icons/md";
+import { MdEdit, MdDeleteOutline, MdCheck, MdContentCopy } from "react-icons/md";
 
 interface PasswordCellProps {
   id: number;
