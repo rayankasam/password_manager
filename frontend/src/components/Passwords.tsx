@@ -9,11 +9,10 @@ import {
   Switch,
   Box,
 } from '@chakra-ui/react';
-import { MdAdd, MdRefresh, MdEdit, MdSave, MdClose, MdRemove, MdContentCopy } from 'react-icons/md';
+import { MdRefresh, MdEdit, MdSave, MdClose, MdRemove, MdContentCopy } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
 import { host } from '../connection';
 import TanStackTable from './TanStackTable';
-import AddPassword from './AddPassword';
 import EditableCell from './EditableCell';
 
 interface PasswordsProps {
@@ -32,7 +31,6 @@ const Passwords = ({ token }: PasswordsProps) => {
   const [query, setQuery] = useState('');
   const [status, setStatus] = useState('');
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
-  const [addingPassword, setAddingPassword] = useState(false);
   const [limit, setLimit] = useState(5);
   const [editId, setEditId] = useState<number | null>(null);
   const [editedEntry, setEditedEntry] = useState<PasswordEntry | null>(null);
