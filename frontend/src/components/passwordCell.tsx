@@ -1,7 +1,7 @@
 import { useState } from "react";
 import Spoiler from "./spoilerTag";
 import { Button, Input, useColorModeValue, Box, Flex, useBreakpointValue } from "@chakra-ui/react";
-import { MdEdit, MdDeleteOutline, MdCheck } from "react-icons/md";
+import { MdEdit, MdDeleteOutline, MdCheck, MdOutlineContentCopy, MdContentCopy } from "react-icons/md";
 
 interface PasswordCellProps {
   id: number;
@@ -24,6 +24,15 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
   const inputBgColor = useColorModeValue("white", "gray.600");
 
   const buttonWidth = useBreakpointValue({ base: '100%', lg: 'auto' });
+  const copyToClipboard = (text: string) => {
+	  console.log('text', text)
+	  var textField = document.createElement('textarea')
+	  textField.innerText = text
+	  document.body.appendChild(textField)
+	  textField.select()
+	  document.execCommand('copy')
+	  textField.remove()
+  }
 
   const handleConfirmEdit = () => {
     const updatedEntry: { platform?: string; user?: string; password?: string } = {};
@@ -61,8 +70,12 @@ const PasswordCell = ({ id, platform, username, password, updateFunc, deleteFunc
           justify="space-between"
         >
           <Box textAlign="left" flex="1" fontWeight="bold" mb={{ base: 2, lg: 0 }}>{platform}</Box>
-          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}>{username}</Box>
-          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}>{isTop ? password : <Spoiler text={password} />}</Box>
+          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}>{username}
+	  {!isTop && <Button leftIcon={<MdContentCopy/>} iconSpacing={"auto"} onClick={() => copyToClipboard(username)} ml={2}/>}
+	  </Box>
+          <Box textAlign="left" flex="1" mb={{ base: 2, lg: 0 }}>{isTop ? password : <Spoiler text={password} />} 
+	  {!isTop && <Button leftIcon={<MdContentCopy/>} iconSpacing={"auto"} onClick={() => copyToClipboard(password)} ml={2}/>}
+	  </Box>
           {!isTop && deleteFunc ? 
             <Flex direction={{ base: "column", lg: "row" }} ml={{ lg: 4 }} justifyContent="flex-end">
               <Button
