@@ -1,4 +1,4 @@
-FROM rust:latest as builder
+FROM rust:1.82 as builder
 WORKDIR /usr/local/src
 COPY . .
 RUN cargo install diesel_cli --no-default-features --features postgres
