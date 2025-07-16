@@ -33,14 +33,10 @@ pub async fn get_passwords(
         .clone()
         .into_inner()
         .query
-        .unwrap_or("".to_string());
-    let page = query_params.page.unwrap_or(1);
-    let page_size = query_params.page_size.unwrap_or(10);
-    let offset = (page - 1) * page_size;
+        .unwrap_or_else(|| "".to_string());
 
     let conn = &mut establish_connection();
 
-    // Get total count for pagination
     let total_count: i64 = match password_entries::table
         .filter(password_entries::user_id.eq(uid))
         .filter(password_entries::platform.ilike(format!("%{query_str}%")))
@@ -55,12 +51,21 @@ pub async fn get_passwords(
         }
     };
 
+    let mut query = password_entries::table
+        .filter(password_entries::user_id.eq(uid))
+        .filter(password_entries::platform.ilike(format!("%{query_str}%")))
+        .into_boxed();
+
+    // Apply pagination only if provided
+    if let (Some(page), Some(page_size)) = (query_params.page, query_params.page_size) {
+        if page > 0 && page_size > 0 {
+            let offset = (page - 1) * page_size;
+            query = query.offset(offset).limit(page_size);
+        }
+    }
+
     let entries_result: Result<Vec<PasswordEntry>, Error> = conn.build_transaction().run(|conn| {
-        password_entries::table
-            .filter(password_entries::user_id.eq(uid))
-            .filter(password_entries::platform.ilike(format!("%{query_str}%")))
-            .offset(offset)
-            .limit(page_size)
+        query
             .select(PasswordEntry::as_select())
             .load::<PasswordEntry>(conn)
     });
@@ -87,8 +92,8 @@ pub async fn get_passwords(
             HttpResponse::Ok().json(serde_json::json!({
                 "items": new_pass_entries,
                 "total": total_count,
-                "page": page,
-                "page_size": page_size
+                "page": query_params.page.unwrap_or(1),
+                "page_size": query_params.page_size.unwrap_or(total_count as i64)
             }))
         }
         Err(_) => HttpResponse::InternalServerError().json(MyResponse {

@@ -73,6 +73,13 @@ const Passwords = ({ token }: PasswordsProps) => {
     }
   }, [status]);
 
+  useEffect(() => {
+	  setPagination({
+		  pageIndex: 0,
+		  pageSize: pagination.pageSize
+	  })
+  }, [query])
+
   const handleDeleteClick = (id: number) => {
   setPasswordToDelete(id);
   onDeleteDialogOpen();
@@ -188,16 +195,17 @@ const deletePassword = async () => {
               onChange={(newValue) => setEditedEntry({ ...editedEntry, user: newValue })}
             />
           ) : (
-            row.original.user
+	  <Button
+	  	variant={"ghost"}
+		size="sm"
+		borderRadius={"full"}
+		leftIcon={<MdContentCopy/>}
+		onClick={() => navigator.clipboard.writeText(row.original.user)}
+		  _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
+	  >
+	  {row.original.user}
+	  </Button>
           )}
-          <IconButton
-            aria-label="Copy Username"
-            icon={<MdContentCopy />}
-            onClick={() => navigator.clipboard.writeText(row.original.user)}
-            colorScheme="gray"
-            size="sm"
-            ml={2}
-          />
         </Flex>
       ),
     }),
@@ -211,16 +219,17 @@ const deletePassword = async () => {
               onChange={(newValue) => setEditedEntry({ ...editedEntry, password: newValue })}
             />
           ) : (
-            '••••••••'
+	  <Button
+	  	variant={"ghost"}
+		size="sm"
+		borderRadius={"full"}
+		leftIcon={<MdContentCopy/>}
+		onClick={() => navigator.clipboard.writeText(row.original.password)}
+		  _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
+	  >
+            ••••••••
+	  </Button>
           )}
-          <IconButton
-            aria-label="Copy Password"
-            icon={<MdContentCopy />}
-            onClick={() => navigator.clipboard.writeText(row.original.password)}
-            colorScheme="gray"
-            size="sm"
-            ml={2}
-          />
         </Flex>
       ),
     }),
@@ -284,7 +293,7 @@ const deletePassword = async () => {
       maxHeight="100vh"
       width="100%" 
       maxWidth="100vw" 
-      p={4} 
+      overflowX="hidden"
       bg={bgColor} 
       color={textColor}
     >
@@ -381,6 +390,7 @@ const deletePassword = async () => {
       {status && (
         <Box 
           mb={4} 
+	  mx="auto"
           bg={useColorModeValue('gray.100', 'gray.800')} 
           color={textColor} 
           p={2}
