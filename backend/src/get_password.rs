@@ -24,13 +24,13 @@ pub async fn get_passwords(
     };
     let uid = claims.id;
     let query_str = query_params.clone().into_inner().query.unwrap_or("".to_string());
-    let limit = query_params.clone().into_inner().limit.unwrap_or(5);
+    let limit = query_params.clone().into_inner().limit.unwrap_or(i64::MAX);
     let conn = &mut establish_connection();
 
     let entries_result: Result<Vec<PasswordEntry>, Error> = conn.build_transaction().run(|conn| {
         password_entries::table
             .filter(password_entries::user_id.eq(uid))
-            .filter(password_entries::platform.ilike(format!("%{}%", query_str)))
+            .filter(password_entries::platform.ilike(format!("%{query_str}%")))
             .limit(limit)
             .select(PasswordEntry::as_select())
             .load::<PasswordEntry>(conn)
@@ -42,7 +42,7 @@ pub async fn get_passwords(
                 .map(|entry| {
                     let extra_info_entry: Option<HashMap<String, String>> = get_extra_info(&entry);
                     PasswordResEntry {
-                        id: entry.id.clone(),
+                        id: entry.id,
                         platform: entry.platform.clone(),
                         user: entry.user.clone(),
                         password: entry.password.clone(),
@@ -61,7 +61,7 @@ fn get_extra_info(password_entry: &PasswordEntry) -> Option<HashMap<String, Stri
     let extra_infos: Vec<ExtraInfo> = ExtraInfo::belonging_to(password_entry)
         .load(conn)
         .expect("Issue getting Extra Info");
-    if extra_infos.len() == 0 {
+    if extra_infos.is_empty() {
         return None;
     }
     let mut extra_infos_map = HashMap::new();
