@@ -2,35 +2,46 @@ import {
   flexRender,
   getCoreRowModel,
   getPaginationRowModel,
+  OnChangeFn,
   useReactTable,
+  type PaginationState,
 } from '@tanstack/react-table';
 import { Box, Table, Thead, Tbody, Tr, Th, Td, Flex, Button, Select, Text, ColorMode } from '@chakra-ui/react';
-import { useState } from 'react';
 
 interface TanStackTableProps<T> {
   columns: any[];
   data: T[];
   colorMode: ColorMode;
+  pagination?: PaginationState;
+  onPaginationChange?: OnChangeFn<PaginationState>;
+  pageCount?: number;
 }
 
 interface Identifiable {
   id: number;
 }
 
-const TanStackTable = <T extends Identifiable>({ columns, data, colorMode }: TanStackTableProps<T>) => {
-  const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
-
+const TanStackTable = <T extends Identifiable>({ 
+  columns, 
+  data = [],
+  colorMode,
+  pagination = { pageIndex: 0, pageSize: 10 },
+  onPaginationChange,
+  pageCount = 1,
+}: TanStackTableProps<T>) => {
   const table = useReactTable({
     columns,
     data,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    onPaginationChange: setPagination,
+    manualPagination: !!onPaginationChange,
+    pageCount,
     state: {
       pagination,
     },
+    onPaginationChange: onPaginationChange,
   });
-  const textColor = colorMode === "dark" ? "white" : "black";
+  const textColor = colorMode === "dark" ? "white" : "black"
 
   return (
     <Box overflowX="auto">
@@ -76,7 +87,14 @@ const TanStackTable = <T extends Identifiable>({ columns, data, colorMode }: Tan
           <Select
             value={table.getState().pagination.pageSize}
             onChange={(e) => {
-              table.setPageSize(Number(e.target.value));
+              const newPageSize = Number(e.target.value);
+              table.setPageSize(newPageSize);
+              if (onPaginationChange) {
+                onPaginationChange({
+                  ...table.getState().pagination,
+                  pageSize: newPageSize,
+                });
+              }
             }}
             width="120px"
             size="sm"

@@ -6,7 +6,6 @@ import {
   IconButton,
   useColorMode,
   useColorModeValue,
-  Switch,
   Box,
   AlertDialog,
   AlertDialogBody,
@@ -19,9 +18,17 @@ import {
 } from '@chakra-ui/react';
 import { MdAdd, MdRefresh, MdEdit, MdSave, MdClose, MdRemove, MdContentCopy } from 'react-icons/md';
 import { createColumnHelper } from '@tanstack/react-table';
+import ColorModeSwitch from './ColorModeSwitch';
 import { host } from '../connection';
 import TanStackTable from './TanStackTable';
 import EditableCell from './EditableCell';
+
+interface PasswordResponse {
+  items: PasswordEntry[];
+  total: number;
+  page: number;
+  page_size: number;
+}
 
 interface PasswordsProps {
   token: string;
@@ -47,6 +54,11 @@ const Passwords = ({ token }: PasswordsProps) => {
     user: '', 
     password: '' 
   });
+  const [pagination, setPagination] = useState({
+    pageIndex: 0,
+    pageSize: 5
+  });
+  const [totalEntryCount, setTotalEntryCount] = useState(0);
   const { isOpen: isDeleteDialogOpen, onOpen: onDeleteDialogOpen, onClose: onDeleteDialogClose } = useDisclosure();
   const [passwordToDelete, setPasswordToDelete] = useState<number | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -112,15 +124,16 @@ const deletePassword = async () => {
 
   const fetchPasswords = async () => {
     try {
-      const response = await fetch(host + `/get_password?query=${encodeURIComponent(query)}`, {
+      const response = await fetch(host + `/get_password?query=${encodeURIComponent(query)}&page=${pagination.pageIndex + 1}&page_size=${pagination.pageSize}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
         },
       });
-      const data = await response.json();
-      setEntries(data);
+      const data: PasswordResponse = await response.json();
+      setEntries(data.items)
+      setTotalEntryCount(data.total)
     } catch (error) {
       setStatus('Error fetching passwords: ' + error);
     }
@@ -148,7 +161,7 @@ const deletePassword = async () => {
 
   useEffect(() => {
     fetchPasswords();
-  }, [query]);
+  }, [query, pagination.pageSize, pagination.pageIndex]);
 
   const columnHelper = createColumnHelper<PasswordEntry>();
 
@@ -283,7 +296,7 @@ const deletePassword = async () => {
         mb={4}
       >
         <Heading color={textColor}>Passwords</Heading>
-        <Switch isChecked={colorMode === 'dark'} onChange={toggleColorMode} />
+	<ColorModeSwitch colorMode={colorMode} toggleColorMode={toggleColorMode}/>
       </Flex>
        {isAdding && (
         <Flex 
@@ -382,7 +395,7 @@ const deletePassword = async () => {
         overflowY="auto" // Enable vertical scrolling
         overflowX="auto" // Enable horizontal scrolling if needed
       >
-        <TanStackTable columns={columns} data={entries} colorMode={colorMode}/>
+        <TanStackTable columns={columns} data={entries} colorMode={colorMode} pagination={pagination} pageCount={Math.ceil(totalEntryCount/pagination.pageSize)} onPaginationChange={setPagination}/>
       </Box>
       <AlertDialog
   isOpen={isDeleteDialogOpen}

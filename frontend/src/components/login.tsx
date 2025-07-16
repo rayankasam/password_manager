@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Alert, Input, Button, Heading, useColorMode, Switch, Flex, Link } from "@chakra-ui/react";
+import { Alert, Input, Button, Heading, useColorMode, Flex, Link } from "@chakra-ui/react";
+import ColorModeSwitch from "./ColorModeSwitch";
 import { host } from "../connection";
 
 interface LoginProps {
@@ -63,8 +64,8 @@ function Login({ setToken }: LoginProps) {
   return (
     <Flex direction="column" align="center" justify="center" height="100vh" p={4} bg={colorMode === "dark" ? "gray.800" : "white"}>
       <Flex justify="space-between" width="100%" maxWidth="400px" mb={4}>
-        <Heading size="sm" color={colorMode === "dark" ? "white" : "black"}>{isRegisterMode ? "Register" : "Login"}</Heading>
-        <Switch isChecked={colorMode === "dark"} onChange={toggleColorMode} />
+        <Heading color={colorMode === "dark" ? "white" : "black"}>{isRegisterMode ? "Register" : "Login"}</Heading>
+	<ColorModeSwitch colorMode={colorMode} toggleColorMode={toggleColorMode}/>
       </Flex>
       <form style={{ ...formStyle, backgroundColor: colorMode === "dark" ? "#2D3748" : "white" }} onSubmit={handleSubmit}>
         {status !== "" && <Alert status='error' mb={4} color={colorMode === "dark" ? "white" : "black"}>{status}</Alert>}
