@@ -382,7 +382,7 @@ const deletePassword = async () => {
         overflowY="auto" // Enable vertical scrolling
         overflowX="auto" // Enable horizontal scrolling if needed
       >
-        <TanStackTable columns={columns} data={entries} />
+        <TanStackTable columns={columns} data={entries} colorMode={colorMode}/>
       </Box>
       <AlertDialog
   isOpen={isDeleteDialogOpen}

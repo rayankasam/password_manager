@@ -4,21 +4,22 @@ import {
   getPaginationRowModel,
   useReactTable,
 } from '@tanstack/react-table';
-import { Box, Table, Thead, Tbody, Tr, Th, Td, Flex, Button } from '@chakra-ui/react';
+import { Box, Table, Thead, Tbody, Tr, Th, Td, Flex, Button, Select, Text, ColorMode } from '@chakra-ui/react';
 import { useState } from 'react';
 
 interface TanStackTableProps<T> {
   columns: any[];
   data: T[];
+  colorMode: ColorMode;
 }
 
 interface Identifiable {
   id: number;
 }
 
-const TanStackTable = <T extends Identifiable>({ columns, data }: TanStackTableProps<T>) => {
-
+const TanStackTable = <T extends Identifiable>({ columns, data, colorMode }: TanStackTableProps<T>) => {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 5 });
+
   const table = useReactTable({
     columns,
     data,
@@ -29,6 +30,7 @@ const TanStackTable = <T extends Identifiable>({ columns, data }: TanStackTableP
       pagination,
     },
   });
+  const textColor = colorMode === "dark" ? "white" : "black";
 
   return (
     <Box overflowX="auto">
@@ -37,7 +39,7 @@ const TanStackTable = <T extends Identifiable>({ columns, data }: TanStackTableP
           {table.getHeaderGroups().map((headerGroup) => (
             <Tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
-                <Th key={header.id} color="white">
+                <Th key={header.id} color={textColor}>
                   {flexRender(header.column.columnDef.header, header.getContext())}
                 </Th>
               ))}
@@ -48,7 +50,7 @@ const TanStackTable = <T extends Identifiable>({ columns, data }: TanStackTableP
           {table.getRowModel().rows.map((row) => (
             <Tr key={row.original.id}>
               {row.getVisibleCells().map((cell) => (
-                <Td key={cell.id} color="white">
+                <Td key={cell.id} color={textColor}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </Td>
               ))}
@@ -56,7 +58,8 @@ const TanStackTable = <T extends Identifiable>({ columns, data }: TanStackTableP
           ))}
         </Tbody>
       </Table>
-      <Flex mt={4} justify="space-between">
+      
+      <Flex mt={4} justify="space-between" align="center">
         <Button
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
@@ -64,6 +67,28 @@ const TanStackTable = <T extends Identifiable>({ columns, data }: TanStackTableP
         >
           Previous
         </Button>
+        
+        <Flex align="center" gap={3}>
+          <Text fontSize="sm">
+            Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
+          </Text>
+          
+          <Select
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => {
+              table.setPageSize(Number(e.target.value));
+            }}
+            width="120px"
+            size="sm"
+          >
+            {[5, 10, 20, 50, 100].map((pageSize) => (
+              <option key={pageSize} value={pageSize}>
+                Show {pageSize}
+              </option>
+            ))}
+          </Select>
+        </Flex>
+        
         <Button
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
