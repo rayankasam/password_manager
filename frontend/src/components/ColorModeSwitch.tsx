@@ -1,12 +1,15 @@
-import { IconButton, useColorModeValue } from '@chakra-ui/react';
-import { FaSun, FaMoon } from 'react-icons/fa';
+import { IconButton, useColorModeValue } from "@chakra-ui/react";
+import { FaSun, FaMoon } from "react-icons/fa";
 
 interface ColorModeSwitchProps {
-  colorMode: 'light' | 'dark';
+  colorMode: "light" | "dark";
   toggleColorMode: () => void;
 }
 
-const ColorModeSwitch = ({ colorMode, toggleColorMode }: ColorModeSwitchProps) => {
+const ColorModeSwitch = ({
+  colorMode,
+  toggleColorMode,
+}: ColorModeSwitchProps) => {
   const SwitchIcon = useColorModeValue(FaMoon, FaSun);
 
   return (
@@ -20,7 +23,7 @@ const ColorModeSwitch = ({ colorMode, toggleColorMode }: ColorModeSwitchProps) =
       onClick={toggleColorMode}
       icon={<SwitchIcon />}
       _hover={{
-        bg: useColorModeValue('gray.200', 'gray.700'),
+        bg: useColorModeValue("gray.200", "gray.700"),
       }}
     />
   );

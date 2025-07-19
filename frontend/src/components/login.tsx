@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Alert, Input, Button, Heading, useColorMode, Flex, Link } from "@chakra-ui/react";
+import {
+  Alert,
+  Input,
+  Button,
+  Heading,
+  useColorMode,
+  Flex,
+  Link,
+} from "@chakra-ui/react";
 import ColorModeSwitch from "./ColorModeSwitch";
 import { host } from "../connection";
 
@@ -19,7 +27,9 @@ function Login({ setToken }: LoginProps) {
   const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(event.target.value);
   };
-  const handlePasswordTestChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePasswordTestChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
     setPasswordTest(event.target.value);
   };
   const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -62,13 +72,39 @@ function Login({ setToken }: LoginProps) {
   };
 
   return (
-    <Flex direction="column" align="center" justify="center" height="100vh" p={4} bg={colorMode === "dark" ? "gray.800" : "white"}>
+    <Flex
+      direction="column"
+      align="center"
+      justify="center"
+      height="100vh"
+      p={4}
+      bg={colorMode === "dark" ? "gray.800" : "white"}
+    >
       <Flex justify="space-between" width="100%" maxWidth="400px" mb={4}>
-        <Heading color={colorMode === "dark" ? "white" : "black"}>{isRegisterMode ? "Register" : "Login"}</Heading>
-	<ColorModeSwitch colorMode={colorMode} toggleColorMode={toggleColorMode}/>
+        <Heading color={colorMode === "dark" ? "white" : "black"}>
+          {isRegisterMode ? "Register" : "Login"}
+        </Heading>
+        <ColorModeSwitch
+          colorMode={colorMode}
+          toggleColorMode={toggleColorMode}
+        />
       </Flex>
-      <form style={{ ...formStyle, backgroundColor: colorMode === "dark" ? "#2D3748" : "white" }} onSubmit={handleSubmit}>
-        {status !== "" && <Alert status='error' mb={4} color={colorMode === "dark" ? "white" : "black"}>{status}</Alert>}
+      <form
+        style={{
+          ...formStyle,
+          backgroundColor: colorMode === "dark" ? "#2D3748" : "white",
+        }}
+        onSubmit={handleSubmit}
+      >
+        {status !== "" && (
+          <Alert
+            status="error"
+            mb={4}
+            color={colorMode === "dark" ? "white" : "black"}
+          >
+            {status}
+          </Alert>
+        )}
         <Input
           type="username"
           placeholder="Username"
@@ -109,7 +145,7 @@ function Login({ setToken }: LoginProps) {
           style={{
             ...buttonStyle,
             ...(isHovered && buttonHoverStyle),
-            marginBottom: '10px',
+            marginBottom: "10px",
           }}
           onMouseEnter={() => setIsHovered(true)}
           onMouseLeave={() => setIsHovered(false)}
@@ -122,7 +158,9 @@ function Login({ setToken }: LoginProps) {
           fontWeight="bold"
           mt={3}
         >
-          {isRegisterMode ? "Already have an account? Login" : "Don't have an account? Register"}
+          {isRegisterMode
+            ? "Already have an account? Login"
+            : "Don't have an account? Register"}
         </Link>
       </form>
     </Flex>

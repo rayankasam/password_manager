@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   Heading,
   Input,
@@ -15,13 +15,44 @@ import {
   AlertDialogOverlay,
   Button,
   useDisclosure,
-} from '@chakra-ui/react';
-import { MdAdd, MdRefresh, MdEdit, MdSave, MdClose, MdRemove, MdContentCopy } from 'react-icons/md';
-import { createColumnHelper } from '@tanstack/react-table';
-import ColorModeSwitch from './ColorModeSwitch';
-import { host } from '../connection';
-import TanStackTable from './TanStackTable';
-import EditableCell from './EditableCell';
+  Table,
+  Thead,
+  Tbody,
+  Tr,
+  Th,
+  Td,
+  Select,
+  Text,
+} from "@chakra-ui/react";
+
+import {
+  MdAdd,
+  MdRefresh,
+  MdEdit,
+  MdSave,
+  MdClose,
+  MdRemove,
+  MdContentCopy,
+} from "react-icons/md";
+
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable,
+  Table as ReactTable,
+  CellContext,
+} from "@tanstack/react-table";
+
+import ColorModeSwitch from "./ColorModeSwitch";
+import { host } from "../connection";
+
+interface PasswordEntry {
+  id: number;
+  platform: string;
+  user: string;
+  password: string;
+}
 
 interface PasswordResponse {
   items: PasswordEntry[];
@@ -34,285 +65,333 @@ interface PasswordsProps {
   token: string;
 }
 
-interface PasswordEntry {
-  id: number;
-  platform: string;
-  user: string;
-  password: string;
+interface ColumnMeta {
+  type?: string;
 }
+
+type TableMeta = {
+  editedRows: { [key: string]: boolean };
+  setEditedRows: React.Dispatch<
+    React.SetStateAction<{ [key: string]: boolean }>
+  >;
+  revertData: (rowIndex: number, revert: boolean) => void;
+  updateData: (rowIndex: number, columnId: string, value: string) => void;
+  saveRow: (updatedRow: PasswordEntry) => void;
+};
+
+const TableCell = ({
+  getValue,
+  row,
+  column,
+  table,
+}: CellContext<PasswordEntry, unknown>) => {
+  const initialValue = getValue() as string;
+  const columnId = column.id;
+  const meta = table.options.meta as TableMeta;
+  const isEditing = meta?.editedRows[row.id];
+  const [value, setValue] = useState(initialValue);
+
+  useEffect(() => {
+    setValue(initialValue);
+  }, [initialValue]);
+
+  const onBlur = () => {
+    meta?.updateData(row.index, columnId, value);
+  };
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(initialValue);
+  };
+
+  if (isEditing) {
+    const inputType = (column.columnDef.meta as ColumnMeta)?.type || "text";
+
+    return (
+      <Input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={onBlur}
+        size="sm"
+        type={inputType}
+      />
+    );
+  }
+
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      leftIcon={<MdContentCopy />}
+      onClick={handleCopy}
+    >
+      {columnId === "password" ? "••••••••" : initialValue}
+    </Button>
+  );
+};
+
+const EditCell = ({
+  row,
+  table,
+}: {
+  row: any;
+  table: ReactTable<PasswordEntry>;
+}) => {
+  const meta = table.options.meta as TableMeta;
+  const isEditing = meta?.editedRows[row.id];
+
+  const toggleEdit = (action: "edit" | "cancel" | "done") => {
+    if (action === "cancel") {
+      meta?.setEditedRows((prev) => ({ ...prev, [row.id]: false }));
+      meta?.revertData(row.index, true);
+    } else if (action === "done") {
+      meta?.setEditedRows((prev) => ({ ...prev, [row.id]: false }));
+      meta?.saveRow(row.original);
+    } else {
+      meta?.setEditedRows((prev) => ({ ...prev, [row.id]: true }));
+      meta?.revertData(row.index, false);
+    }
+  };
+
+  return (
+    <Flex>
+      {isEditing ? (
+        <>
+          <IconButton
+            aria-label="Cancel"
+            icon={<MdClose />}
+            size="sm"
+            onClick={() => toggleEdit("cancel")}
+            colorScheme="red"
+            mr={1}
+          />
+          <IconButton
+            aria-label="Save"
+            icon={<MdSave />}
+            size="sm"
+            onClick={() => toggleEdit("done")}
+            colorScheme="green"
+          />
+        </>
+      ) : (
+        <IconButton
+          aria-label="Edit"
+          icon={<MdEdit />}
+          onClick={() => toggleEdit("edit")}
+          colorScheme="blue"
+        />
+      )}
+    </Flex>
+  );
+};
 
 const Passwords = ({ token }: PasswordsProps) => {
   const { colorMode, toggleColorMode } = useColorMode();
-  const [query, setQuery] = useState('');
-  const [status, setStatus] = useState('');
+  const [query, setQuery] = useState("");
+  const [status, setStatus] = useState("");
   const [entries, setEntries] = useState<PasswordEntry[]>([]);
-  const [editId, setEditId] = useState<number | null>(null);
-  const [editedEntry, setEditedEntry] = useState<PasswordEntry | null>(null);
+  const [originalData, setOriginalData] = useState<PasswordEntry[]>([]);
   const [isAdding, setIsAdding] = useState(false);
-  const [newEntry, setNewEntry] = useState<Omit<PasswordEntry, 'id'>>({ 
-    platform: '', 
-    user: '', 
-    password: '' 
+  const [newEntry, setNewEntry] = useState<Omit<PasswordEntry, "id">>({
+    platform: "",
+    user: "",
+    password: "",
   });
   const [pagination, setPagination] = useState({
     pageIndex: 0,
-    pageSize: 5
+    pageSize: 5,
   });
   const [totalEntryCount, setTotalEntryCount] = useState(0);
-  const { isOpen: isDeleteDialogOpen, onOpen: onDeleteDialogOpen, onClose: onDeleteDialogClose } = useDisclosure();
+
+  const { isOpen, onOpen, onClose } = useDisclosure();
   const [passwordToDelete, setPasswordToDelete] = useState<number | null>(null);
   const cancelRef = useRef<HTMLButtonElement>(null);
 
-  const bgColor = useColorModeValue('transparent', 'transparent');
-  const textColor = useColorModeValue('black', 'white');
-  const inputBgColor = useColorModeValue('white', 'gray.700');
-
-  useEffect(() => {
-    if (status !== '') {
-      setTimeout(() => setStatus(''), 4000);
-    }
-  }, [status]);
-
-  useEffect(() => {
-	  setPagination({
-		  pageIndex: 0,
-		  pageSize: pagination.pageSize
-	  })
-  }, [query])
-
-  const handleDeleteClick = (id: number) => {
-  setPasswordToDelete(id);
-  onDeleteDialogOpen();
-};
-
-const deletePassword = async () => {
-  if (passwordToDelete === null) return;
-  
-  try {
-    const response = await fetch(host + '/del_password', {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ id: passwordToDelete }),
-    });
-    const resData = await response.json();
-    fetchPasswords();
-    setStatus(resData.message);
-    onDeleteDialogClose();
-    setPasswordToDelete(null);
-  } catch (error) {
-    setStatus('Error deleting password: ' + error);
-    onDeleteDialogClose();
-    setPasswordToDelete(null);
-  }
-};
-
-  const updateEntryFunc = async (updatedEntry: PasswordEntry) => {
-    try {
-      const response = await fetch(host + '/update_password/' + updatedEntry.id, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify(updatedEntry),
-      });
-      const data = await response.json();
-      setStatus(data.message);
-      setEditId(null);
-      setEditedEntry(null);
-      fetchPasswords();
-    } catch (error) {
-      setStatus('Error updating entry: ' + error);
-    }
-  };
+  const bgColor = useColorModeValue("transparent", "transparent");
+  const textColor = useColorModeValue("black", "white");
+  const inputBgColor = useColorModeValue("white", "gray.700");
 
   const fetchPasswords = async () => {
     try {
-      const response = await fetch(host + `/get_password?query=${encodeURIComponent(query)}&page=${pagination.pageIndex + 1}&page_size=${pagination.pageSize}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${host}/get_password?query=${encodeURIComponent(query)}&page=${pagination.pageIndex + 1}&page_size=${pagination.pageSize}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       const data: PasswordResponse = await response.json();
-      setEntries(data.items)
-      setTotalEntryCount(data.total)
+      setEntries(data.items);
+      setOriginalData(data.items);
+      setTotalEntryCount(data.total);
     } catch (error) {
-      setStatus('Error fetching passwords: ' + error);
+      setStatus("Error fetching passwords: " + error);
     }
   };
 
-    const createPassword = async () => {
-	    try {
-	      const response = await fetch(host + '/add_password', {
-		method: 'POST',
-		headers: {
-		  'Content-Type': 'application/json',
-		  'Authorization': `Bearer ${token}`,
-		},
-		body: JSON.stringify(newEntry),
-	      });
-	      const data = await response.json();
-	      setStatus(data.message);
-	      setIsAdding(false);
-	      setNewEntry({ platform: '', user: '', password: '' });
-	      fetchPasswords();
-	    } catch (error) {
-	      setStatus('Error creating password: ' + error);
-	    }
-	  };
+  const createPassword = async () => {
+    try {
+      const response = await fetch(`${host}/add_password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(newEntry),
+      });
+      const data = await response.json();
+      setStatus(data.message);
+      setIsAdding(false);
+      setNewEntry({ platform: "", user: "", password: "" });
+      fetchPasswords();
+    } catch (error) {
+      setStatus("Error creating password: " + error);
+    }
+  };
+
+  const updatePassword = async (updatedEntry: PasswordEntry) => {
+    try {
+      const response = await fetch(
+        `${host}/update_password/${updatedEntry.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(updatedEntry),
+        }
+      );
+      const data = await response.json();
+      setStatus(data.message);
+      fetchPasswords();
+    } catch (error) {
+      setStatus("Error updating password: " + error);
+    }
+  };
+
+  const deletePassword = async () => {
+    if (!passwordToDelete) return;
+    try {
+      const response = await fetch(`${host}/del_password`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ id: passwordToDelete }),
+      });
+      const data = await response.json();
+      setStatus(data.message);
+      onClose();
+      setPasswordToDelete(null);
+      fetchPasswords();
+    } catch (error) {
+      setStatus("Error deleting password: " + error);
+      onClose();
+    }
+  };
+
+  useEffect(() => {
+    if (status) setTimeout(() => setStatus(""), 4000);
+  }, [status]);
 
   useEffect(() => {
     fetchPasswords();
   }, [query, pagination.pageSize, pagination.pageIndex]);
 
+  const [editedRows, setEditedRows] = useState<{ [key: string]: boolean }>({});
+
   const columnHelper = createColumnHelper<PasswordEntry>();
 
-  const columns = useMemo(() => [
-    columnHelper.accessor('platform', {
-      header: 'Platform',
-      cell: ({ row }) =>
-        editId === row.original.id && editedEntry ? (
-          <EditableCell
-            value={editedEntry.platform}
-            onChange={(newValue) => setEditedEntry({ ...editedEntry, platform: newValue })}
-          />
-        ) : (
-          row.original.platform
-        ),
+  const columns = [
+    columnHelper.accessor("platform", {
+      header: "Platform",
+      cell: TableCell,
+      meta: { type: "text" } as ColumnMeta,
     }),
-    columnHelper.accessor('user', {
-      header: 'Username',
-      cell: ({ row }) => (
-        <Flex align="center">
-          {editId === row.original.id && editedEntry ? (
-            <EditableCell
-              value={editedEntry.user}
-              onChange={(newValue) => setEditedEntry({ ...editedEntry, user: newValue })}
-            />
-          ) : (
-	  <Button
-	  	variant={"ghost"}
-		size="sm"
-		borderRadius={"full"}
-		leftIcon={<MdContentCopy/>}
-		onClick={() => navigator.clipboard.writeText(row.original.user)}
-		  _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
-	  >
-	  {row.original.user}
-	  </Button>
-          )}
-        </Flex>
-      ),
+    columnHelper.accessor("user", {
+      header: "Username",
+      cell: TableCell,
+      meta: { type: "text" } as ColumnMeta,
     }),
-    columnHelper.accessor('password', {
-      header: 'Password',
-      cell: ({ row }) => (
-        <Flex align="center">
-          {editId === row.original.id && editedEntry ? (
-            <EditableCell
-              value={editedEntry.password}
-              onChange={(newValue) => setEditedEntry({ ...editedEntry, password: newValue })}
-            />
-          ) : (
-	  <Button
-	  	variant={"ghost"}
-		size="sm"
-		borderRadius={"full"}
-		leftIcon={<MdContentCopy/>}
-		onClick={() => navigator.clipboard.writeText(row.original.password)}
-		  _hover={{ bg: colorMode === 'dark' ? 'gray.700' : 'gray.200' }}
-	  >
-            ••••••••
-	  </Button>
-          )}
-        </Flex>
-      ),
+    columnHelper.accessor("password", {
+      header: "Password",
+      cell: TableCell,
+      meta: { type: "text" } as ColumnMeta,
     }),
     columnHelper.display({
-      id: 'actions',
-      cell: ({ row }) => (
-        <Flex>
-          {editId === row.original.id ? (
-            <>
-              <IconButton
-                aria-label="Save"
-                icon={<MdSave />}
-                onClick={() => {
-                  if (editedEntry) updateEntryFunc(editedEntry);
-                }}
-                colorScheme="green"
-                mr={"5px"}
-              />
-              <IconButton
-                aria-label="Cancel"
-                icon={<MdClose />}
-                onClick={() => {
-                  setEditId(null);
-                  setEditedEntry(null);
-                  fetchPasswords();
-                }}
-                colorScheme="red"
-		mr="5px"
-              />
-            </>
-          ) : (
-	  <>
-            <IconButton
-              aria-label="Edit"
-              icon={<MdEdit />}
-              onClick={() => {
-                setEditId(row.original.id);
-                setEditedEntry({ ...row.original });
-              }}
-              colorScheme="blue"
-              mr={2}
-            />
+      id: "actions",
+      cell: ({ row, table }) => (
+        <Flex gap={2}>
+          <EditCell row={row} table={table} />
           <IconButton
             aria-label="Delete"
             icon={<MdRemove />}
-            onClick={() => handleDeleteClick(row.original.id)}
             colorScheme="red"
+            onClick={() => {
+              setPasswordToDelete(row.original.id);
+              onOpen();
+            }}
           />
-	    </>
-          )}
         </Flex>
       ),
     }),
-  ], [editId, editedEntry]);
+  ];
+
+  const table = useReactTable({
+    data: entries,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    manualPagination: true,
+    pageCount: Math.ceil(totalEntryCount / pagination.pageSize),
+    state: { pagination },
+    onPaginationChange: setPagination,
+    meta: {
+      editedRows,
+      setEditedRows,
+      revertData: (rowIndex: number, revert: boolean) => {
+        if (revert) {
+          setEntries((prev) =>
+            prev.map((item, idx) =>
+              idx === rowIndex ? originalData[rowIndex] : item
+            )
+          );
+        } else {
+          setOriginalData([...entries]);
+        }
+      },
+      updateData: (rowIndex: number, columnId: string, value: string) => {
+        setEntries((prev) =>
+          prev.map((item, idx) =>
+            idx === rowIndex ? { ...item, [columnId]: value } : item
+          )
+        );
+      },
+      saveRow: (updatedRow: PasswordEntry) => {
+        updatePassword(updatedRow);
+      },
+    },
+  });
 
   return (
-    <Flex 
-      direction="column" 
-      align="center" 
-      height="100vh" 
-      maxHeight="100vh"
-      width="100%" 
-      maxWidth="100vw" 
-      overflowX="hidden"
-      bg={bgColor} 
+    <Flex
+      direction="column"
+      align="center"
+      minH="100vh"
+      bg={bgColor}
       color={textColor}
     >
-      <Flex 
-        justify="space-between" 
-        width="100%" 
-        maxWidth="800px" 
-        alignItems="center" 
-        mb={4}
-      >
-        <Heading color={textColor}>Passwords</Heading>
-	<ColorModeSwitch colorMode={colorMode} toggleColorMode={toggleColorMode}/>
+      <Flex justify="space-between" w="100%" maxW="800px" align="center" mb={4}>
+        <Heading>Passwords</Heading>
+        <ColorModeSwitch
+          colorMode={colorMode}
+          toggleColorMode={toggleColorMode}
+        />
       </Flex>
-       {isAdding && (
-        <Flex 
-          mb={4} 
-          width="100%" 
-          maxWidth="800px" 
-          alignItems="center"
+
+      {isAdding && (
+        <Flex
+          mb={4}
+          w="100%"
+          maxW="800px"
+          align="center"
           bg={inputBgColor}
           p={4}
           borderRadius="md"
@@ -320,26 +399,27 @@ const deletePassword = async () => {
           <Input
             placeholder="Platform"
             value={newEntry.platform}
-            onChange={(e) => setNewEntry({...newEntry, platform: e.target.value})}
-            bg={useColorModeValue('white', 'gray.800')}
+            onChange={(e) =>
+              setNewEntry({ ...newEntry, platform: e.target.value })
+            }
             mr={2}
           />
           <Input
             placeholder="Username"
             value={newEntry.user}
-            onChange={(e) => setNewEntry({...newEntry, user: e.target.value})}
-            bg={useColorModeValue('white', 'gray.800')}
+            onChange={(e) => setNewEntry({ ...newEntry, user: e.target.value })}
             mr={2}
           />
           <Input
             placeholder="Password"
             value={newEntry.password}
-            onChange={(e) => setNewEntry({...newEntry, password: e.target.value})}
-            bg={useColorModeValue('white', 'gray.800')}
+            onChange={(e) =>
+              setNewEntry({ ...newEntry, password: e.target.value })
+            }
             mr={2}
           />
           <IconButton
-            aria-label="Save new password"
+            aria-label="Save"
             icon={<MdSave />}
             onClick={createPassword}
             colorScheme="green"
@@ -348,91 +428,125 @@ const deletePassword = async () => {
           <IconButton
             aria-label="Cancel"
             icon={<MdClose />}
-            onClick={() => {
-              setIsAdding(false);
-              setNewEntry({ platform: '', user: '', password: '' });
-            }}
+            onClick={() => setIsAdding(false)}
             colorScheme="red"
           />
         </Flex>
       )}
-	{!isAdding &&
-      <Flex 
-        mb={4} 
-        width="100%" 
-        maxWidth="800px" 
-        alignItems="center"
-      >
-        <Input
-          type="text"
-          placeholder="Search..."
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          bg={inputBgColor}
-          color={textColor}
-          mr={2}
-        />
-        <IconButton
-          aria-label="Refresh the passwords list"
-          icon={<MdRefresh />}
-          onClick={() => fetchPasswords()}
-          colorScheme={colorMode === 'dark' ? 'teal' : 'blue'}
-	  mr={"5px"}
-        />
-	<IconButton
-          aria-label="Add new password"
-          icon={<MdAdd />}
-          onClick={() => setIsAdding(true)}
-          colorScheme="green"
-        />
-      </Flex>
-	}
+
+      {!isAdding && (
+        <Flex mb={4} w="100%" maxW="800px" align="center">
+          <Input
+            placeholder="Search..."
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            mr={2}
+          />
+          <IconButton
+            aria-label="Refresh"
+            icon={<MdRefresh />}
+            onClick={fetchPasswords}
+            mr={2}
+          />
+          <IconButton
+            aria-label="Add"
+            icon={<MdAdd />}
+            onClick={() => setIsAdding(true)}
+            colorScheme="green"
+          />
+        </Flex>
+      )}
+
       {status && (
-        <Box 
-          mb={4} 
-	  mx="auto"
-          bg={useColorModeValue('gray.100', 'gray.800')} 
-          color={textColor} 
-          p={2}
-        >
+        <Box mb={4} p={2} bg={useColorModeValue("gray.100", "gray.800")}>
           {status}
         </Box>
       )}
-      <Box 
-        width="100%" 
-        maxWidth="100vw" 
-        maxHeight="calc(100vh - 180px)" // Adjust based on header/input/status height
-        overflowY="auto" // Enable vertical scrolling
-        overflowX="auto" // Enable horizontal scrolling if needed
-      >
-        <TanStackTable columns={columns} data={entries} colorMode={colorMode} pagination={pagination} pageCount={Math.ceil(totalEntryCount/pagination.pageSize)} onPaginationChange={setPagination}/>
+
+      <Box w="100%" overflowX="auto">
+        <Table>
+          <Thead>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <Tr key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <Th key={header.id}>
+                    {flexRender(
+                      header.column.columnDef.header,
+                      header.getContext()
+                    )}
+                  </Th>
+                ))}
+              </Tr>
+            ))}
+          </Thead>
+          <Tbody>
+            {table.getRowModel().rows.map((row) => (
+              <Tr key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <Td key={cell.id}>
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </Td>
+                ))}
+              </Tr>
+            ))}
+          </Tbody>
+        </Table>
       </Box>
+
+      <Flex justify="space-between" w="100%" maxW="800px" mt={4}>
+        <Button
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          Previous
+        </Button>
+        <Flex align="center">
+          <Text mr={2}>
+            Page {table.getState().pagination.pageIndex + 1} of{" "}
+            {table.getPageCount()}
+          </Text>
+          <Select
+            value={table.getState().pagination.pageSize}
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+            w="120px"
+          >
+            {[5, 10, 20, 50].map((size) => (
+              <option key={size} value={size}>
+                Show {size}
+              </option>
+            ))}
+          </Select>
+        </Flex>
+        <Button
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          Next
+        </Button>
+      </Flex>
+
       <AlertDialog
-  isOpen={isDeleteDialogOpen}
-  leastDestructiveRef={cancelRef}
-  onClose={onDeleteDialogClose}
->
-  <AlertDialogOverlay>
-    <AlertDialogContent>
-      <AlertDialogHeader fontSize="lg" fontWeight="bold">
-        Delete Password
-      </AlertDialogHeader>
-
-      <AlertDialogBody>
-        Are you sure you want to delete this password? This action cannot be undone.
-      </AlertDialogBody>
-
-      <AlertDialogFooter>
-        <Button ref={cancelRef} onClick={onDeleteDialogClose}>
-          Cancel
-        </Button>
-        <Button colorScheme="red" onClick={deletePassword} ml={3}>
-          Delete
-        </Button>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialogOverlay>
-</AlertDialog>
+        isOpen={isOpen}
+        leastDestructiveRef={cancelRef}
+        onClose={onClose}
+      >
+        <AlertDialogOverlay>
+          <AlertDialogContent>
+            <AlertDialogHeader>Delete Password</AlertDialogHeader>
+            <AlertDialogBody>
+              Are you sure you want to delete this password?
+            </AlertDialogBody>
+            <AlertDialogFooter>
+              <Button ref={cancelRef} onClick={onClose}>
+                Cancel
+              </Button>
+              <Button colorScheme="red" onClick={deletePassword} ml={3}>
+                Delete
+              </Button>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialogOverlay>
+      </AlertDialog>
     </Flex>
   );
 };
