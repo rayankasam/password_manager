@@ -1,73 +1,92 @@
 import React, { useState } from "react";
 import {
-  Alert,
   Input,
   Button,
   Heading,
   useColorMode,
   Flex,
   Link,
+  UseToastOptions,
+  ToastId,
 } from "@chakra-ui/react";
 import ColorModeSwitch from "./ColorModeSwitch";
 import { host } from "../connection";
 
 interface LoginProps {
   setToken: (token: string) => void;
+  toast: (options?: UseToastOptions) => ToastId;
 }
 
-function Login({ setToken }: LoginProps) {
+function Login({ setToken, toast }: LoginProps) {
   const { colorMode, toggleColorMode } = useColorMode();
   const [password, setPassword] = useState("");
   const [passwordTest, setPasswordTest] = useState("");
   const [username, setUsername] = useState("");
-  const [status, setStatus] = useState("");
   const [isHovered, setIsHovered] = useState(false);
   const [isRegisterMode, setIsRegisterMode] = useState(false);
 
   const handlePasswordChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setPassword(event.target.value);
   };
+
   const handlePasswordTestChange = (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     setPasswordTest(event.target.value);
   };
+
   const handleUsernameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setUsername(event.target.value);
   };
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
     if (isRegisterMode && password !== passwordTest) {
-      setStatus("Passwords don't match");
+      toast({
+        title: "Error",
+        description: "Passwords don't match",
+        status: "error",
+      });
       return;
     }
+
     const endpoint = isRegisterMode ? "/new_user" : "/login";
     const action = isRegisterMode ? "registering" : "logging in";
 
     try {
       const response = await fetch(host + endpoint, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+
       const resData = await response.json();
-      console.log(resData.id);
+
       if (response.ok) {
-        setStatus(`Success ${action}!`);
+        toast({
+          title: "Success",
+          description: `Successfully ${isRegisterMode ? "registered" : "logged in"}.`,
+          status: "success",
+        });
+
         if (!isRegisterMode) {
-          setToken(resData.token); // Only set Token if logging in
+          setToken(resData.token);
         }
       } else {
-        setStatus(resData.message || `Error ${action}`);
+        toast({
+          title: "Error",
+          description: resData.message || `Error ${action}`,
+          status: "error",
+        });
       }
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        setStatus(`Error ${action}: ${error.message}`);
-      } else {
-        setStatus(`Error ${action}: Something went wrong`);
-      }
+      toast({
+        title: "Error",
+        description:
+          error instanceof Error ? error.message : "Something went wrong",
+        status: "error",
+      });
     }
   };
 
@@ -89,6 +108,7 @@ function Login({ setToken }: LoginProps) {
           toggleColorMode={toggleColorMode}
         />
       </Flex>
+
       <form
         style={{
           ...formStyle,
@@ -96,15 +116,6 @@ function Login({ setToken }: LoginProps) {
         }}
         onSubmit={handleSubmit}
       >
-        {status !== "" && (
-          <Alert
-            status="error"
-            mb={4}
-            color={colorMode === "dark" ? "white" : "black"}
-          >
-            {status}
-          </Alert>
-        )}
         <Input
           type="username"
           placeholder="Username"
@@ -140,11 +151,12 @@ function Login({ setToken }: LoginProps) {
             color={colorMode === "dark" ? "white" : "black"}
           />
         )}
+
         <Button
           type="submit"
           style={{
             ...buttonStyle,
-            ...(isHovered && buttonHoverStyle),
+            ...(isHovered ? buttonHoverStyle : {}),
             marginBottom: "10px",
           }}
           onMouseEnter={() => setIsHovered(true)}
@@ -152,6 +164,7 @@ function Login({ setToken }: LoginProps) {
         >
           {isRegisterMode ? "Register" : "Login"}
         </Button>
+
         <Link
           onClick={() => setIsRegisterMode(!isRegisterMode)}
           color={colorMode === "dark" ? "teal.200" : "blue.500"}

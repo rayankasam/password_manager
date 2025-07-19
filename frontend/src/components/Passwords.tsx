@@ -23,6 +23,8 @@ import {
   Td,
   Select,
   Text,
+  UseToastOptions,
+  ToastId,
 } from "@chakra-ui/react";
 
 import {
@@ -63,6 +65,7 @@ interface PasswordResponse {
 
 interface PasswordsProps {
   token: string;
+  toast: (options?: UseToastOptions) => ToastId;
 }
 
 interface ColumnMeta {
@@ -159,7 +162,6 @@ const EditCell = ({
           <IconButton
             aria-label="Cancel"
             icon={<MdClose />}
-            size="sm"
             onClick={() => toggleEdit("cancel")}
             colorScheme="red"
             mr={1}
@@ -167,7 +169,6 @@ const EditCell = ({
           <IconButton
             aria-label="Save"
             icon={<MdSave />}
-            size="sm"
             onClick={() => toggleEdit("done")}
             colorScheme="green"
           />
@@ -184,7 +185,7 @@ const EditCell = ({
   );
 };
 
-const Passwords = ({ token }: PasswordsProps) => {
+const Passwords = ({ token, toast }: PasswordsProps) => {
   const { colorMode, toggleColorMode } = useColorMode();
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState("");
@@ -221,11 +222,23 @@ const Passwords = ({ token }: PasswordsProps) => {
       setOriginalData(data.items);
       setTotalEntryCount(data.total);
     } catch (error) {
-      setStatus("Error fetching passwords: " + error);
+      toast({
+        title: "Error.",
+        description: "Failed to fetch passwords",
+        status: "error",
+      });
     }
   };
 
   const createPassword = async () => {
+    if (newEntry.platform === "") {
+      toast({
+        title: "Error",
+        description: "Must include a platform",
+        status: "error",
+      });
+      return;
+    }
     try {
       const response = await fetch(`${host}/add_password`, {
         method: "POST",
@@ -236,12 +249,22 @@ const Passwords = ({ token }: PasswordsProps) => {
         body: JSON.stringify(newEntry),
       });
       const data = await response.json();
-      setStatus(data.message);
+      toast({
+        title: "Success",
+        description: data.message,
+        status: "success",
+      });
+
       setIsAdding(false);
       setNewEntry({ platform: "", user: "", password: "" });
       fetchPasswords();
     } catch (error) {
       setStatus("Error creating password: " + error);
+      toast({
+        title: "Error",
+        description: "Failed to create password.",
+        status: "error",
+      });
     }
   };
 
@@ -259,10 +282,19 @@ const Passwords = ({ token }: PasswordsProps) => {
         }
       );
       const data = await response.json();
-      setStatus(data.message);
+      toast({
+        title: "Success",
+        description: data.message,
+        status: "success",
+      });
+
       fetchPasswords();
     } catch (error) {
-      setStatus("Error updating password: " + error);
+      toast({
+        title: "Error",
+        description: "Failed to update password.",
+        status: "error",
+      });
     }
   };
 
@@ -278,19 +310,23 @@ const Passwords = ({ token }: PasswordsProps) => {
         body: JSON.stringify({ id: passwordToDelete }),
       });
       const data = await response.json();
-      setStatus(data.message);
+      toast({
+        title: "Success",
+        description: data.message,
+        status: "success",
+      });
       onClose();
       setPasswordToDelete(null);
       fetchPasswords();
     } catch (error) {
-      setStatus("Error deleting password: " + error);
+      toast({
+        title: "Error",
+        description: "Failed to delete password.",
+        status: "error",
+      });
       onClose();
     }
   };
-
-  useEffect(() => {
-    if (status) setTimeout(() => setStatus(""), 4000);
-  }, [status]);
 
   useEffect(() => {
     fetchPasswords();
@@ -303,7 +339,9 @@ const Passwords = ({ token }: PasswordsProps) => {
   const columns = [
     columnHelper.accessor("platform", {
       header: "Platform",
-      cell: TableCell,
+      cell: ({ row }) => (
+        <Text style={{ fontWeight: "bold" }}>{row.original.platform}</Text>
+      ),
       meta: { type: "text" } as ColumnMeta,
     }),
     columnHelper.accessor("user", {
