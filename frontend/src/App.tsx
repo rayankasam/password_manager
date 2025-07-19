@@ -4,8 +4,6 @@ import Passwords from "./components/Passwords.jsx";
 import Login from "./components/login.jsx";
 import {
   ChakraProvider,
-  useToast,
-  extendTheme,
   createStandaloneToast,
 } from "@chakra-ui/react";
 
